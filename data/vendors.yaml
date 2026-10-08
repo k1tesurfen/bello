@@ -1,0 +1,3509 @@
+# Bello vendor database (own, curated; Apache-2.0).
+# Researched from public vendor documentation and observed behaviour of the services.
+# Nothing is copied from DuckDuckGo Tracker Radar or other NonCommercial/copyleft lists.
+#
+# Schema per vendor:
+#   id                    stable lowercase id
+#   name                  company (and product)
+#   country               ISO 3166-1 alpha-2 country of the company seat
+#   thirdCountry          optional override; default: country is outside the EU/EEA
+#   category              werbung | analyse | video | karten | fonts | cdn | zahlung | bot-schutz
+#                         | social | tag-manager | cmp | chat | sonstiges
+#   hosts                 host globs (`*.x.com` also matches x.com); most specific pattern wins
+#   cookies               cookie name globs; `name@hostglob` restricts to a cookie domain
+#   storageKeys           localStorage/sessionStorage key globs
+#   necessaryCookies      cookie globs that are technically necessary (bot protection, load
+#                         balancing, CSRF, payment fraud prevention) -> INFO, not tracking.
+#                         Every other cookie/storage match of a non-CMP vendor counts as tracking,
+#                         whatever the vendor category (e.g. YouTube VISITOR_INFO1_LIVE).
+#   necessaryStorageKeys  same for localStorage/sessionStorage keys
+#   privacyPolicyAliases  names under which the service is usually named in a Datenschutzerklaerung
+#   fix                   German recommendation (category default is used when omitted)
+#   isCmp                 true for consent managers; their cookies/keys are consent state (necessary)
+version: 1
+vendors:
+  # ---------------------------------------------------------------- Google
+  - {
+      id: google-fonts,
+      name: 'Google LLC (Google Fonts)',
+      country: US,
+      category: fonts,
+      hosts: ['fonts.googleapis.com', 'fonts.gstatic.com'],
+      privacyPolicyAliases: ['Google Fonts', 'Google Web Fonts', 'fonts.googleapis.com'],
+      fix: 'Google Fonts lokal hosten: Schriftdateien (woff2) herunterladen, per @font-face vom eigenen Server ausliefern und den Link auf fonts.googleapis.com entfernen.',
+    }
+  - {
+      id: google-maps,
+      name: 'Google LLC (Google Maps)',
+      country: US,
+      category: karten,
+      hosts:
+        [
+          'maps.googleapis.com',
+          'maps.gstatic.com',
+          'maps.google.com',
+          'maps.google.de',
+          'khms*.google.com',
+          'mts*.google.com',
+          'streetviewpixels-pa.googleapis.com',
+        ],
+      privacyPolicyAliases: ['Google Maps', 'Google Maps API', 'Google Karten'],
+      fix: 'Karte erst nach Einwilligung bzw. per Zwei-Klick-Lösung laden (Platzhalter mit Hinweis) oder auf eine selbst gehostete OpenStreetMap-Karte umstellen.',
+    }
+  - {
+      id: youtube,
+      name: 'Google LLC (YouTube)',
+      country: US,
+      category: video,
+      hosts:
+        [
+          '*.youtube.com',
+          'youtube.com',
+          '*.ytimg.com',
+          '*.googlevideo.com',
+          'youtu.be',
+          '*.ggpht.com',
+        ],
+      cookies:
+        [
+          'VISITOR_INFO1_LIVE',
+          'VISITOR_PRIVACY_METADATA',
+          'YSC',
+          'PREF@*.youtube.com',
+          'GPS@*.youtube.com',
+          '__Secure-YEC',
+          '__Secure-ROLLOUT_TOKEN',
+          'yt-*',
+        ],
+      storageKeys:
+        ['yt-remote-*', 'yt-player-*', 'yt.innertube::*', 'ytidb::*', 'yt-html5-player-modules::*'],
+      privacyPolicyAliases: ['YouTube', 'YouTube-Videos', 'Google YouTube'],
+      fix: 'YouTube-Videos erst nach Klick einbinden (Zwei-Klick-Lösung / Vorschaubild lokal hosten). Der erweiterte Datenschutzmodus (youtube-nocookie.com) stellt bereits beim Laden eine Verbindung zu Google her und ersetzt keine Einwilligung.',
+    }
+  - {
+      id: youtube-nocookie,
+      name: 'Google LLC (YouTube, erweiterter Datenschutzmodus)',
+      country: US,
+      category: video,
+      hosts: ['*.youtube-nocookie.com'],
+      privacyPolicyAliases: ['youtube-nocookie.com', 'YouTube erweiterter Datenschutzmodus'],
+      fix: 'Auch der erweiterte Datenschutzmodus verbindet beim Laden des iframes mit Google. Video erst nach Klick (Zwei-Klick-Lösung) einbetten.',
+    }
+  - {
+      id: google-analytics,
+      name: 'Google LLC (Google Analytics)',
+      country: US,
+      category: analyse,
+      hosts:
+        [
+          '*.google-analytics.com',
+          'analytics.google.com',
+          '*.analytics.google.com',
+          'stats.g.doubleclick.net',
+          'ssl.google-analytics.com',
+        ],
+      cookies:
+        [
+          '_ga',
+          '_ga_*',
+          '_gid',
+          '_gat',
+          '_gat_*',
+          '_gac_*',
+          '__utma',
+          '__utmb',
+          '__utmc',
+          '__utmt',
+          '__utmz',
+          '__utmv',
+          'AMP_TOKEN',
+          '_dc_gtm_*',
+        ],
+      storageKeys: ['ga:clientId', '_ga*'],
+      privacyPolicyAliases:
+        ['Google Analytics', 'Google Analytics 4', 'GA4', 'Universal Analytics'],
+      fix: 'Google Analytics erst nach Einwilligung laden (über den Tag-Manager mit Consent-Trigger bzw. CMP-Blockierung) oder auf eine selbst gehostete, cookielose Alternative (z. B. Matomo) wechseln.',
+    }
+  - {
+      id: google-ads,
+      name: 'Google LLC (Google Ads / DoubleClick / AdSense)',
+      country: US,
+      category: werbung,
+      hosts:
+        [
+          '*.doubleclick.net',
+          '*.googlesyndication.com',
+          '*.googleadservices.com',
+          '*.googletagservices.com',
+          '*.adtrafficquality.google',
+          'adservice.google.*',
+          'pagead2.googlesyndication.com',
+          '*.2mdn.net',
+          '*.admob.com',
+          'fundingchoicesmessages.google.com',
+        ],
+      cookies:
+        [
+          'IDE@*.doubleclick.net',
+          'test_cookie@*.doubleclick.net',
+          'DSID',
+          '__gads',
+          '__gpi',
+          '__eoi',
+          '_gcl_au',
+          '_gcl_aw',
+          '_gcl_dc',
+          '_gcl_gb',
+          '_gcl_ag',
+          '_gac_gb_*',
+          'ar_debug',
+          'FLC',
+          'RUL',
+        ],
+      storageKeys: ['google_ads_*', '_gcl_ls'],
+      privacyPolicyAliases:
+        [
+          'Google Ads',
+          'Google AdWords',
+          'DoubleClick',
+          'Google AdSense',
+          'Google Conversion Tracking',
+          'Remarketing',
+        ],
+      fix: 'Werbe- und Conversion-Tags (Google Ads, AdSense) ausschließlich nach Einwilligung auslösen und im Tag-Manager an Werbe-Consent koppeln.',
+    }
+  - {
+      id: google-tag-manager,
+      name: 'Google LLC (Google Tag Manager)',
+      country: US,
+      category: tag-manager,
+      hosts: ['*.googletagmanager.com'],
+      privacyPolicyAliases: ['Google Tag Manager', 'Tag Manager'],
+      fix: 'Tag Manager erst nach Einwilligung laden oder (mit Consent Mode) so konfigurieren, dass vor Einwilligung keine Tags feuern; Verbindung zu googletagmanager.com selbst überträgt bereits die IP-Adresse.',
+    }
+  - {
+      id: google-recaptcha,
+      name: 'Google LLC (reCAPTCHA)',
+      country: US,
+      category: bot-schutz,
+      hosts: ['*.recaptcha.net', 'recaptcha.google.com', 'recaptchaenterprise.googleapis.com'],
+      cookies: ['_GRECAPTCHA', 'rc::*'],
+      storageKeys: ['rc::*'],
+      privacyPolicyAliases: ['reCAPTCHA', 'Google reCAPTCHA', 'reCAPTCHA v3'],
+      fix: 'reCAPTCHA nur auf Seiten mit Formular und erst nach Einwilligung laden, oder auf eine datensparsame Alternative (Friendly Captcha, Altcha, Cloudflare Turnstile) wechseln.',
+    }
+  - {
+      id: google-hosted-libraries,
+      name: 'Google LLC (Hosted Libraries)',
+      country: US,
+      category: cdn,
+      hosts: ['ajax.googleapis.com'],
+      privacyPolicyAliases:
+        ['Google Hosted Libraries', 'ajax.googleapis.com', 'Google API Libraries'],
+      fix: 'JavaScript-Bibliotheken (z. B. jQuery) selbst hosten statt von ajax.googleapis.com zu laden.',
+    }
+  - {
+      id: google-gstatic,
+      name: 'Google LLC (gstatic)',
+      country: US,
+      category: cdn,
+      hosts: ['*.gstatic.com'],
+      privacyPolicyAliases: ['gstatic', 'Google Static Content'],
+    }
+  - {
+      id: google-usercontent,
+      name: 'Google LLC (Google User Content)',
+      country: US,
+      category: sonstiges,
+      hosts:
+        [
+          '*.googleusercontent.com',
+          '*.googleapis.com',
+          '*.google.com',
+          'google.de',
+          '*.google.de',
+          '*.apis.google.com',
+          'accounts.google.com',
+          '*.googleapis.cn',
+        ],
+      cookies:
+        [
+          'NID@*.google.com',
+          'AEC@*.google.com',
+          '1P_JAR@*.google.com',
+          'SOCS@*.google.com',
+          'CONSENT@*.google.com',
+          '__Secure-ENID',
+          'SIDCC',
+          'APISID',
+          'SAPISID',
+          'SSID',
+          'HSID',
+          'SID@*.google.com',
+          '__Secure-1PSID',
+          '__Secure-3PSID',
+          '__Secure-1PAPISID',
+          '__Secure-3PAPISID',
+          '__Secure-1PSIDTS',
+          '__Secure-3PSIDTS',
+          '__Secure-1PSIDCC',
+          '__Secure-3PSIDCC',
+        ],
+      privacyPolicyAliases: ['Google', 'Google LLC', 'Google Ireland Limited'],
+      fix: 'Einzelne Google-Ressourcen (Embeds, Kontakt-/Login-Plugins, Bilder) identifizieren und erst nach Einwilligung laden oder selbst hosten.',
+    }
+  - {
+      id: google-funding-choices,
+      name: 'Google LLC (Funding Choices / Google CMP)',
+      country: US,
+      category: cmp,
+      isCmp: true,
+      hosts: [],
+      cookies: ['FCCDCF', 'FCNEC', 'FCOEC'],
+      privacyPolicyAliases: ['Google Funding Choices', 'Google Consent Management'],
+    }
+  - {
+      id: firebase,
+      name: 'Google LLC (Firebase)',
+      country: US,
+      category: sonstiges,
+      hosts:
+        [
+          '*.firebaseio.com',
+          '*.firebaseapp.com',
+          'firebase.googleapis.com',
+          '*.firebaseinstallations.googleapis.com',
+          'firestore.googleapis.com',
+          '*.web.app',
+          '*.cloudfunctions.net',
+        ],
+      privacyPolicyAliases: ['Firebase', 'Google Firebase'],
+    }
+  # ---------------------------------------------------------------- Meta
+  - {
+      id: facebook,
+      name: 'Meta Platforms Ireland Ltd. (Facebook)',
+      country: IE,
+      thirdCountry: true,
+      category: social,
+      hosts:
+        ['*.facebook.com', '*.facebook.net', '*.fbcdn.net', '*.fbsbx.com', 'fb.me', '*.fb.com'],
+      cookies:
+        [
+          '_fbp',
+          '_fbc',
+          'fr@*.facebook.com',
+          'datr',
+          'sb@*.facebook.com',
+          'c_user',
+          'xs@*.facebook.com',
+          'wd@*.facebook.com',
+          'act',
+          'presence',
+          'locale@*.facebook.com',
+        ],
+      storageKeys: ['_fbp', 'fbssls_*', 'fbm_*'],
+      privacyPolicyAliases:
+        [
+          'Facebook',
+          'Facebook Pixel',
+          'Meta Pixel',
+          'Facebook Custom Audiences',
+          'Facebook Connect',
+          'Facebook Social Plugins',
+          'Meta',
+        ],
+      fix: 'Facebook-Pixel/-Plugins erst nach Einwilligung laden; Like-/Share-Buttons durch Zwei-Klick-Lösung oder einfache Links ersetzen.',
+    }
+  - {
+      id: instagram,
+      name: 'Meta Platforms Ireland Ltd. (Instagram)',
+      country: IE,
+      thirdCountry: true,
+      category: social,
+      hosts: ['*.instagram.com', '*.cdninstagram.com', '*.instagr.am'],
+      cookies: ['ig_did', 'mid@*.instagram.com', 'csrftoken@*.instagram.com', 'ig_nrcb'],
+      privacyPolicyAliases: ['Instagram', 'Instagram-Plugin', 'Instagram-Einbettung'],
+      fix: 'Instagram-Einbettungen erst nach Klick laden (Zwei-Klick-Lösung) oder Bild + Link lokal bereitstellen.',
+    }
+  - {
+      id: whatsapp,
+      name: 'WhatsApp Ireland Ltd.',
+      country: IE,
+      thirdCountry: true,
+      category: social,
+      hosts: ['*.whatsapp.com', '*.whatsapp.net', 'wa.me'],
+      privacyPolicyAliases: ['WhatsApp'],
+    }
+  # ---------------------------------------------------------------- Soziale Netzwerke & Werbung
+  - {
+      id: linkedin,
+      name: 'LinkedIn Ireland Unlimited Company (LinkedIn)',
+      country: IE,
+      thirdCountry: true,
+      category: social,
+      hosts: ['*.linkedin.com', '*.licdn.com', 'linkedin.com'],
+      cookies:
+        [
+          'bcookie',
+          'bscookie',
+          'lidc',
+          'li_gc',
+          'li_sugr',
+          'li_mc',
+          '_li_ss',
+          'JSESSIONID@*.linkedin.com',
+          'lang@*.linkedin.com',
+          'UserMatchHistory',
+          'AnalyticsSyncHistory',
+        ],
+      privacyPolicyAliases: ['LinkedIn', 'LinkedIn Plugin', 'LinkedIn Share'],
+      fix: 'LinkedIn-Plugins erst nach Einwilligung laden (Zwei-Klick-Lösung).',
+    }
+  - {
+      id: linkedin-insight,
+      name: 'LinkedIn Ireland Unlimited Company (Insight Tag)',
+      country: IE,
+      thirdCountry: true,
+      category: werbung,
+      hosts: ['snap.licdn.com', 'px.ads.linkedin.com', 'dc.ads.linkedin.com', '*.ads.linkedin.com'],
+      cookies: ['li_fat_id', 'li_sugr', 'UserMatchHistory', 'AnalyticsSyncHistory', '_guid'],
+      privacyPolicyAliases:
+        ['LinkedIn Insight Tag', 'LinkedIn Ads', 'LinkedIn Conversion Tracking'],
+    }
+  - {
+      id: tiktok,
+      name: 'TikTok Technology Ltd. (TikTok)',
+      country: IE,
+      thirdCountry: true,
+      category: social,
+      hosts:
+        [
+          '*.tiktok.com',
+          '*.tiktokcdn.com',
+          '*.tiktokcdn-eu.com',
+          '*.tiktokv.com',
+          '*.ibytedtos.com',
+          '*.byteoversea.com',
+          '*.musical.ly',
+        ],
+      cookies: ['ttwid', 'tt_chain_token', 'tt_csrf_token', 'tiktok_webapp_theme', 'msToken'],
+      privacyPolicyAliases: ['TikTok', 'TikTok-Plugin'],
+    }
+  - {
+      id: tiktok-pixel,
+      name: 'TikTok Technology Ltd. (TikTok Pixel)',
+      country: IE,
+      thirdCountry: true,
+      category: werbung,
+      hosts:
+        [
+          'analytics.tiktok.com',
+          'business-api.tiktok.com',
+          'analytics-ipv6.tiktokw.eu',
+          '*.analytics.tiktok.com',
+        ],
+      cookies:
+        ['_ttp', '_tt_enable_cookie', '_ttclid', 'ttcsid', 'ttcsid_*', 'tt_pixel_session_index'],
+      storageKeys: ['tt_appInfo', 'tt_pixel_*', 'ttcsid*'],
+      privacyPolicyAliases: ['TikTok Pixel', 'TikTok Ads', 'TikTok Conversion Tracking'],
+    }
+  - {
+      id: pinterest,
+      name: 'Pinterest Europe Ltd.',
+      country: IE,
+      thirdCountry: true,
+      category: werbung,
+      hosts:
+        ['*.pinterest.com', '*.pinimg.com', 'pinterest.de', '*.pinterest.de', 'ct.pinterest.com'],
+      cookies:
+        [
+          '_pinterest_ct_ua',
+          '_pin_unauth',
+          '_pinterest_sess',
+          '_routing_id',
+          '_derived_epik',
+          '_epik',
+          '_pinterest_ct_rt',
+          '_auth',
+          'csrftoken@*.pinterest.com',
+        ],
+      privacyPolicyAliases: ['Pinterest', 'Pinterest Tag', 'Pinterest Plugin'],
+    }
+  - {
+      id: twitter-x,
+      name: 'X Corp. (Twitter / X)',
+      country: US,
+      category: social,
+      hosts:
+        [
+          '*.twitter.com',
+          'twitter.com',
+          '*.twimg.com',
+          '*.x.com',
+          'x.com',
+          't.co',
+          '*.ads-twitter.com',
+          'analytics.twitter.com',
+        ],
+      cookies:
+        [
+          'personalization_id',
+          'guest_id',
+          'guest_id_ads',
+          'guest_id_marketing',
+          'muc_ads',
+          '_twitter_sess',
+          'twid',
+          'kdt',
+          'ct0',
+          'att',
+          'gt',
+          '_gat@*.twitter.com',
+        ],
+      storageKeys: ['twitter-*', '__twitter_sess'],
+      privacyPolicyAliases: ['Twitter', 'X', 'Twitter Plugin', 'Twitter Pixel', 'X Corp.'],
+      fix: 'X/Twitter-Einbettungen (Timeline, Tweets, Buttons) erst nach Klick laden (Zwei-Klick-Lösung).',
+    }
+  - {
+      id: snapchat,
+      name: 'Snap Inc. (Snapchat Pixel)',
+      country: US,
+      category: werbung,
+      hosts:
+        ['*.snapchat.com', 'sc-static.net', '*.sc-static.net', 'tr.snapchat.com', '*.snap.com'],
+      cookies: ['_scid', '_scid_r', 'sc_at', '_sctr', '_schn', '_scid_*'],
+      privacyPolicyAliases: ['Snapchat', 'Snap Pixel'],
+    }
+  - {
+      id: reddit,
+      name: 'Reddit Inc.',
+      country: US,
+      category: werbung,
+      hosts:
+        ['*.reddit.com', '*.redditstatic.com', '*.redditmedia.com', 'alb.reddit.com', '*.redd.it'],
+      cookies: ['_rdt_uuid', '_rdt_cid', 'reddit_session', 'loid', 'csv', 'edgebucket'],
+      privacyPolicyAliases: ['Reddit', 'Reddit Pixel'],
+    }
+  - {
+      id: xing,
+      name: 'New Work SE (XING)',
+      country: DE,
+      category: social,
+      hosts: ['*.xing.com', '*.xing-share.com', '*.xingcdn.com'],
+      cookies: ['xing_sc*', '_xing_*'],
+      privacyPolicyAliases: ['XING', 'XING Share-Button', 'New Work SE'],
+    }
+  - {
+      id: vkontakte,
+      name: 'VK (VKontakte)',
+      country: RU,
+      category: social,
+      hosts: ['*.vk.com', 'vk.com', '*.vk.ru', '*.userapi.com', '*.vkuser.net'],
+      privacyPolicyAliases: ['VK', 'VKontakte'],
+    }
+  - {
+      id: addthis,
+      name: 'Oracle Corporation (AddThis)',
+      country: US,
+      category: social,
+      hosts: ['*.addthis.com', '*.addthisedge.com'],
+      cookies:
+        ['__atuvc', '__atuvs', '__atssc', 'di2', 'km_ai', 'loc', 'uid@*.addthis.com', 'ouid'],
+      privacyPolicyAliases: ['AddThis'],
+    }
+  - {
+      id: sharethis,
+      name: 'ShareThis Inc.',
+      country: US,
+      category: social,
+      hosts: ['*.sharethis.com', '*.sharethis.net'],
+      cookies: ['__stid', '__stidv', '__sharethis_cookie_test__'],
+      privacyPolicyAliases: ['ShareThis'],
+    }
+  - {
+      id: addtoany,
+      name: 'AddToAny',
+      country: US,
+      category: social,
+      hosts: ['*.addtoany.com'],
+      privacyPolicyAliases: ['AddToAny'],
+    }
+  - {
+      id: disqus,
+      name: 'Disqus, Inc.',
+      country: US,
+      category: social,
+      hosts: ['*.disqus.com', '*.disquscdn.com'],
+      cookies: ['disqus_unique', 'disqus_*', '__jid', '__jids'],
+      privacyPolicyAliases: ['Disqus'],
+    }
+  - {
+      id: giphy,
+      name: 'Giphy, Inc.',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.giphy.com'],
+      privacyPolicyAliases: ['Giphy'],
+    }
+  - {
+      id: flickr,
+      name: 'SmugMug, Inc. (Flickr)',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.flickr.com', '*.staticflickr.com'],
+      privacyPolicyAliases: ['Flickr'],
+    }
+  - {
+      id: shariff,
+      name: "Shariff (c't, selbst gehostet)",
+      country: DE,
+      category: social,
+      hosts: [],
+      privacyPolicyAliases: ['Shariff'],
+    }
+  # ---------------------------------------------------------------- Microsoft
+  - {
+      id: microsoft-clarity,
+      name: 'Microsoft Corporation (Microsoft Clarity)',
+      country: US,
+      category: analyse,
+      hosts: ['*.clarity.ms', 'clarity.ms'],
+      cookies: ['_clck', '_clsk', 'CLID', 'ANONCHK', 'MR@*.clarity.ms', 'SM@*.clarity.ms', '_cltk'],
+      storageKeys: ['_clsk', '_clck', 'clarity*'],
+      privacyPolicyAliases: ['Microsoft Clarity', 'Clarity'],
+      fix: 'Clarity (Session-Replay) nur mit ausdrücklicher Einwilligung laden; alternativ ohne Session-Aufzeichnung auf selbst gehostete Analyse wechseln.',
+    }
+  - {
+      id: microsoft-ads,
+      name: 'Microsoft Corporation (Bing Ads / UET)',
+      country: US,
+      category: werbung,
+      hosts:
+        [
+          'bat.bing.com',
+          '*.bat.bing.com',
+          'bat.r.msn.com',
+          '*.ads.microsoft.com',
+          'c.bing.com',
+          'c.msn.com',
+          '*.bing.com',
+          '*.bing.net',
+        ],
+      cookies:
+        [
+          'MUID',
+          '_uetsid',
+          '_uetvid',
+          '_uetmsclkid',
+          'MUIDB',
+          'SRCHD',
+          'SRCHUID',
+          'SRCHHPGUSR',
+          '_EDGE_S',
+          '_EDGE_V',
+          'ANON',
+          'MSPTC',
+        ],
+      storageKeys: ['_uetsid*', '_uetvid*'],
+      privacyPolicyAliases:
+        ['Microsoft Advertising', 'Bing Ads', 'Microsoft UET', 'Universal Event Tracking'],
+    }
+  - {
+      id: microsoft-appinsights,
+      name: 'Microsoft Corporation (Application Insights)',
+      country: US,
+      category: analyse,
+      hosts:
+        [
+          '*.applicationinsights.azure.com',
+          'dc.services.visualstudio.com',
+          'js.monitor.azure.com',
+          'az416426.vo.msecnd.net',
+        ],
+      cookies: ['ai_user', 'ai_session'],
+      privacyPolicyAliases: ['Azure Application Insights', 'Microsoft Application Insights'],
+    }
+  - {
+      id: microsoft-cdn,
+      name: 'Microsoft Corporation (Azure CDN / ASP.NET CDN)',
+      country: US,
+      category: cdn,
+      hosts:
+        [
+          'ajax.aspnetcdn.com',
+          '*.azureedge.net',
+          '*.msecnd.net',
+          '*.azurefd.net',
+          '*.vo.msecnd.net',
+        ],
+      privacyPolicyAliases: ['Microsoft Ajax CDN', 'Azure CDN'],
+    }
+  - {
+      id: microsoft-office,
+      name: 'Microsoft Corporation (Office / Teams / OneDrive Embeds)',
+      country: US,
+      category: sonstiges,
+      hosts:
+        [
+          '*.office.com',
+          '*.office.net',
+          '*.live.com',
+          '*.microsoftonline.com',
+          '*.sharepoint.com',
+          '*.microsoft.com',
+          '*.sway.office.com',
+          '*.teams.microsoft.com',
+          '*.onedrive.com',
+        ],
+      privacyPolicyAliases: ['Microsoft', 'Microsoft Office 365'],
+    }
+  # ---------------------------------------------------------------- Analyse
+  - {
+      id: hotjar,
+      name: 'Hotjar Ltd.',
+      country: MT,
+      category: analyse,
+      hosts: ['*.hotjar.com', '*.hotjar.io'],
+      cookies:
+        [
+          '_hjSessionUser_*',
+          '_hjSession_*',
+          '_hjid',
+          '_hjFirstSeen',
+          '_hjIncludedInPageviewSample',
+          '_hjIncludedInSessionSample*',
+          '_hjAbsoluteSessionInProgress',
+          '_hjTLDTest',
+          '_hjCachedUserAttributes',
+          '_hjRecordingEnabled',
+          '_hjRecordingLastActivity',
+          'hjViewportId',
+          'hjActiveViewportIds',
+          '_hjClosedSurveyInvites',
+          '_hjDonePolls',
+          '_hjMinimizedPolls',
+          '_hjShownFeedbackMessage',
+          '_hjUserAttributesHash',
+          '_hjHasCachedUserAttributes',
+        ],
+      storageKeys: ['_hj*', 'hjViewportId'],
+      privacyPolicyAliases: ['Hotjar'],
+      fix: 'Hotjar (Heatmaps/Session-Replay) nur nach Einwilligung laden.',
+    }
+  - {
+      id: matomo-cloud,
+      name: 'InnoCraft Ltd. (Matomo Cloud)',
+      country: NZ,
+      category: analyse,
+      hosts: ['*.matomo.cloud', '*.innocraft.cloud', 'cdn.matomo.cloud', 'plugins.matomo.org'],
+      cookies: ['matomo_sessid'],
+      storageKeys: ['matomo.*', 'mtm_*'],
+      privacyPolicyAliases: ['Matomo', 'Matomo Cloud', 'Piwik'],
+      fix: 'Matomo selbst auf eigenem Server in der EU betreiben (ohne Cookies / mit IP-Anonymisierung) oder erst nach Einwilligung laden.',
+    }
+  - {
+      id: matomo-selfhosted,
+      name: 'Matomo (Betreiber je nach Installation)',
+      country: DE,
+      thirdCountry: false,
+      category: analyse,
+      hosts: [],
+      cookies:
+        [
+          '_pk_id.*',
+          '_pk_ses.*',
+          '_pk_ref.*',
+          '_pk_cvar.*',
+          '_pk_hsr.*',
+          '_pk_testcookie*',
+          'MATOMO_SESSID',
+        ],
+      privacyPolicyAliases: ['Matomo', 'Piwik'],
+    }
+  - {
+      id: piwik-pro,
+      name: 'Piwik PRO S.A.',
+      country: PL,
+      category: analyse,
+      hosts: ['*.piwik.pro', '*.containers.piwik.pro'],
+      cookies: ['ppms_privacy_*', 'stg_*', '_pprv_*'],
+      privacyPolicyAliases: ['Piwik PRO'],
+    }
+  - {
+      id: etracker,
+      name: 'etracker GmbH',
+      country: DE,
+      category: analyse,
+      hosts: ['*.etracker.com', '*.etracker.de', '*.etracker.net'],
+      cookies: ['_et_coid', 'cntcookie', 'et_oi_*', '_et_*'],
+      privacyPolicyAliases: ['etracker'],
+      fix: 'etracker im cookielosen Modus betreiben oder erst nach Einwilligung laden.',
+    }
+  - {
+      id: adobe-analytics,
+      name: 'Adobe Inc. (Adobe Analytics / Experience Cloud)',
+      country: US,
+      category: analyse,
+      hosts:
+        [
+          '*.demdex.net',
+          '*.omtrdc.net',
+          '*.2o7.net',
+          '*.adobedc.net',
+          '*.sc.omtrdc.net',
+          '*.adobe.io',
+          '*.omniture.com',
+          '*.adobedtm.com',
+          '*.tt.omtrdc.net',
+        ],
+      cookies:
+        [
+          's_cc',
+          's_sq',
+          's_vi',
+          's_fid',
+          's_ecid',
+          's_ppv',
+          's_nr*',
+          's_gpv*',
+          's_tp',
+          's_ips',
+          's_getNewRepeat',
+          'AMCV_*',
+          'AMCVS_*',
+          'kndctr_*',
+          'mbox',
+          'demdex',
+          'dextp',
+          'at_check',
+          'mboxEdgeCluster',
+          's_pers',
+          's_sess',
+        ],
+      privacyPolicyAliases:
+        [
+          'Adobe Analytics',
+          'Adobe Experience Cloud',
+          'Adobe Target',
+          'Adobe Audience Manager',
+          'Omniture',
+        ],
+    }
+  - {
+      id: adobe-launch,
+      name: 'Adobe Inc. (Adobe Launch / Dynamic Tag Management)',
+      country: US,
+      category: tag-manager,
+      hosts: ['assets.adobedtm.com'],
+      privacyPolicyAliases: ['Adobe Launch', 'Adobe DTM'],
+    }
+  - {
+      id: adobe-advertising,
+      name: 'Adobe Inc. (Adobe Advertising Cloud)',
+      country: US,
+      category: werbung,
+      hosts: ['*.everesttech.net'],
+      privacyPolicyAliases: ['Adobe Advertising Cloud'],
+    }
+  - {
+      id: adobe-fonts,
+      name: 'Adobe Inc. (Adobe Fonts / Typekit)',
+      country: US,
+      category: fonts,
+      hosts: ['*.typekit.net', '*.typekit.com', 'fonts.adobe.com'],
+      privacyPolicyAliases: ['Adobe Fonts', 'Typekit'],
+      fix: 'Adobe Fonts/Typekit nur nach Einwilligung laden oder Schriftlizenz auf lokales Hosting umstellen.',
+    }
+  - {
+      id: mixpanel,
+      name: 'Mixpanel, Inc.',
+      country: US,
+      category: analyse,
+      hosts: ['*.mixpanel.com', '*.mxpnl.com', 'cdn.mxpnl.com'],
+      cookies: ['mp_*_mixpanel', 'mp_*'],
+      storageKeys: ['mp_*'],
+      privacyPolicyAliases: ['Mixpanel'],
+    }
+  - {
+      id: amplitude,
+      name: 'Amplitude, Inc.',
+      country: US,
+      category: analyse,
+      hosts: ['*.amplitude.com', '*.amplitude.eu'],
+      cookies: ['AMP_*', 'amp_*', 'amplitude_id_*'],
+      storageKeys: ['AMP_*', 'amplitude_*'],
+      privacyPolicyAliases: ['Amplitude'],
+    }
+  - {
+      id: segment,
+      name: 'Twilio Inc. (Segment)',
+      country: US,
+      category: analyse,
+      hosts: ['*.segment.com', '*.segment.io', '*.segmentapis.com'],
+      cookies: ['ajs_user_id', 'ajs_anonymous_id', 'ajs_group_id'],
+      storageKeys: ['ajs_*', 'analytics_session_id*', '_ajs*'],
+      privacyPolicyAliases: ['Segment'],
+    }
+  - {
+      id: heap,
+      name: 'Contentsquare (Heap)',
+      country: US,
+      category: analyse,
+      hosts: ['*.heapanalytics.com', '*.heap.io'],
+      cookies: ['_hp2_id.*', '_hp2_ses_props.*', '_hp2_props.*'],
+      privacyPolicyAliases: ['Heap Analytics', 'Heap'],
+    }
+  - {
+      id: fullstory,
+      name: 'FullStory, Inc.',
+      country: US,
+      category: analyse,
+      hosts: ['*.fullstory.com', '*.fs.com'],
+      cookies: ['fs_uid', 'fs_lua', 'fs_cid'],
+      storageKeys: ['_fs_*'],
+      privacyPolicyAliases: ['FullStory'],
+    }
+  - {
+      id: mouseflow,
+      name: 'Mouseflow ApS',
+      country: DK,
+      category: analyse,
+      hosts: ['*.mouseflow.com'],
+      cookies: ['mf_*', 'mf_user', 'mf_session'],
+      storageKeys: ['mf_*'],
+      privacyPolicyAliases: ['Mouseflow'],
+    }
+  - {
+      id: luckyorange,
+      name: 'Lucky Orange (Lucky Orange LLC)',
+      country: US,
+      category: analyse,
+      hosts: ['*.luckyorange.com', '*.luckyorange.net'],
+      cookies: ['_lo_uid', '_lo_v', '_lo_np_*', '_lo_cid', '_lo_rid'],
+      privacyPolicyAliases: ['Lucky Orange'],
+    }
+  - {
+      id: crazyegg,
+      name: 'Crazy Egg, Inc.',
+      country: US,
+      category: analyse,
+      hosts: ['*.crazyegg.com'],
+      cookies: ['_ce.s', '_ce.clock_data', '_ce.clock_event', '_ce.irv', 'cebs', 'cebsp_', 'ce_*'],
+      privacyPolicyAliases: ['Crazy Egg'],
+    }
+  - {
+      id: smartlook,
+      name: 'Cisco Systems (Smartlook)',
+      country: CZ,
+      category: analyse,
+      hosts: ['*.smartlook.com', '*.smartlook.cloud'],
+      cookies: ['SL_C_*', 'SL_L_*', 'SL_GWPT_Show_Hide_tmp', 'SL_wptGlobTipTmp'],
+      privacyPolicyAliases: ['Smartlook'],
+    }
+  - {
+      id: contentsquare,
+      name: 'Content Square SAS (Contentsquare)',
+      country: FR,
+      category: analyse,
+      hosts: ['*.contentsquare.net', '*.contentsquare.com', '*.c-s.io'],
+      cookies: ['_cs_c', '_cs_id', '_cs_s', '_cs_mk', '_cs_cvars', '_cs_ex', '_cs_root'],
+      privacyPolicyAliases: ['Contentsquare', 'ClickTale'],
+    }
+  - {
+      id: plausible,
+      name: 'Plausible Insights OU',
+      country: EE,
+      category: analyse,
+      hosts: ['plausible.io', '*.plausible.io'],
+      privacyPolicyAliases: ['Plausible', 'Plausible Analytics'],
+      fix: 'Plausible lässt sich cookielos selbst hosten; Cloud-Variante in der Datenschutzerklärung nennen und ggf. per Einwilligung steuern.',
+    }
+  - {
+      id: fathom,
+      name: 'Conva Ventures Inc. (Fathom Analytics)',
+      country: CA,
+      category: analyse,
+      hosts: ['*.usefathom.com'],
+      privacyPolicyAliases: ['Fathom Analytics'],
+    }
+  - {
+      id: simpleanalytics,
+      name: 'Simple Analytics B.V.',
+      country: NL,
+      category: analyse,
+      hosts: ['*.simpleanalytics.com', '*.simpleanalyticscdn.com', '*.simpleanalytics.io'],
+      privacyPolicyAliases: ['Simple Analytics'],
+    }
+  - {
+      id: umami,
+      name: 'Umami Software, Inc.',
+      country: US,
+      category: analyse,
+      hosts: ['*.umami.is'],
+      privacyPolicyAliases: ['Umami'],
+    }
+  - {
+      id: pirsch,
+      name: 'Emvi Software GmbH (Pirsch)',
+      country: DE,
+      category: analyse,
+      hosts: ['*.pirsch.io'],
+      privacyPolicyAliases: ['Pirsch'],
+    }
+  - {
+      id: statcounter,
+      name: 'StatCounter Ltd.',
+      country: IE,
+      thirdCountry: false,
+      category: analyse,
+      hosts: ['*.statcounter.com'],
+      cookies: ['sc_is_visitor_unique'],
+      privacyPolicyAliases: ['StatCounter'],
+    }
+  - {
+      id: yandex-metrica,
+      name: 'Yandex LLC (Yandex Metrica)',
+      country: RU,
+      category: analyse,
+      hosts:
+        [
+          'mc.yandex.ru',
+          'mc.yandex.com',
+          '*.yandex.ru',
+          '*.yandex.com',
+          '*.yandex.net',
+          'yastatic.net',
+          '*.yastatic.net',
+        ],
+      cookies:
+        [
+          '_ym_uid',
+          '_ym_d',
+          '_ym_isad',
+          '_ym_visorc',
+          '_ym_metrika_enabled',
+          '_ym_hostIndex',
+          'yandexuid',
+          'ymex',
+          'yabs-sid',
+          'i',
+          'yp',
+        ],
+      privacyPolicyAliases: ['Yandex Metrica', 'Yandex'],
+    }
+  - {
+      id: baidu-analytics,
+      name: 'Baidu, Inc. (Baidu Tongji)',
+      country: CN,
+      category: analyse,
+      hosts: ['*.baidu.com', 'hm.baidu.com'],
+      cookies: ['HMACCOUNT', 'Hm_lvt_*', 'Hm_lpvt_*'],
+      privacyPolicyAliases: ['Baidu'],
+    }
+  - {
+      id: webtrekk-mapp,
+      name: 'Mapp Digital Germany GmbH (Webtrekk / Mapp Intelligence)',
+      country: DE,
+      category: analyse,
+      hosts:
+        ['*.wt-eu02.net', '*.webtrekk.net', '*.wt-safetag.com', '*.mapp.com', '*.mapp-cdn.com'],
+      cookies:
+        [
+          'wtstp_eid',
+          'wt_cdbeid',
+          'wt3_eid',
+          'wt3_sid',
+          'wt_rla',
+          'wt_fpc',
+          'wteid_*',
+          'wtsid_*',
+          'wt_ttv2_*',
+          'wt_nasc',
+        ],
+      privacyPolicyAliases: ['Webtrekk', 'Mapp Intelligence', 'Mapp'],
+    }
+  - {
+      id: infonline,
+      name: 'INFOnline GmbH (SZMnG / IVW)',
+      country: DE,
+      category: analyse,
+      hosts: ['*.ioam.de', '*.infonline.de', '*.iocnt.net', '*.szm.de'],
+      cookies: ['ioam2018', 'ioam_*', 'i00', 'ioam2017'],
+      storageKeys: ['ioam_*', 'ioam2018'],
+      privacyPolicyAliases: ['INFOnline', 'IVW', 'SZMnG', 'Skalierbares Zentrales Messverfahren'],
+      fix: 'INFOnline-Messung nur im anonymen/cookielosen Modus ohne Einwilligung nutzen und Einordnung mit der Datenschutzberatung abstimmen; andernfalls erst nach Einwilligung laden.',
+    }
+  - {
+      id: comscore,
+      name: 'Comscore, Inc.',
+      country: US,
+      category: analyse,
+      hosts: ['*.scorecardresearch.com', '*.comscore.com', '*.zqtk.net'],
+      cookies: ['UID@*.scorecardresearch.com', 'UIDR', 'comScore', '_cs_*'],
+      privacyPolicyAliases: ['comScore', 'Scorecard Research'],
+    }
+  - {
+      id: new-relic,
+      name: 'New Relic, Inc.',
+      country: US,
+      category: analyse,
+      hosts: ['*.newrelic.com', '*.nr-data.net'],
+      privacyPolicyAliases: ['New Relic'],
+    }
+  - {
+      id: datadog,
+      name: 'Datadog, Inc. (RUM)',
+      country: US,
+      category: analyse,
+      hosts:
+        [
+          '*.datadoghq.com',
+          '*.datadoghq.eu',
+          'www.datadoghq-browser-agent.com',
+          '*.browser-intake-datadoghq.eu',
+          '*.browser-intake-datadoghq.com',
+        ],
+      cookies: ['_dd_s'],
+      privacyPolicyAliases: ['Datadog'],
+    }
+  - {
+      id: sentry,
+      name: 'Functional Software, Inc. (Sentry)',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.sentry.io', '*.sentry-cdn.com', '*.ingest.sentry.io', '*.ingest.de.sentry.io'],
+      privacyPolicyAliases: ['Sentry'],
+      fix: 'Fehler-Monitoring (Sentry) erst nach Einwilligung laden oder selbst hosten.',
+    }
+  - {
+      id: logrocket,
+      name: 'LogRocket, Inc.',
+      country: US,
+      category: analyse,
+      hosts: ['*.logrocket.com', '*.lr-ingest.io', '*.lr-in-prod.com', '*.logrocket.io'],
+      privacyPolicyAliases: ['LogRocket'],
+    }
+  - {
+      id: bugsnag,
+      name: 'SmartBear Software (Bugsnag)',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.bugsnag.com', '*.bugsnag.io'],
+      privacyPolicyAliases: ['Bugsnag'],
+    }
+  - {
+      id: rollbar,
+      name: 'Rollbar, Inc.',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.rollbar.com'],
+      privacyPolicyAliases: ['Rollbar'],
+    }
+  - {
+      id: optimizely,
+      name: 'Optimizely North America Inc.',
+      country: US,
+      category: analyse,
+      hosts: ['*.optimizely.com', '*.optimizelyapis.com'],
+      cookies:
+        [
+          'optimizelyEndUserId',
+          'optimizelySegments',
+          'optimizelyBuckets',
+          'optimizelyPendingLogEvents',
+          'optimizelyRedirectData',
+          'optimizelyDomainTestCookie',
+        ],
+      storageKeys: ['optimizely*'],
+      privacyPolicyAliases: ['Optimizely'],
+    }
+  - {
+      id: vwo,
+      name: 'Wingify Software Pvt. Ltd. (VWO)',
+      country: IN,
+      category: analyse,
+      hosts: ['*.visualwebsiteoptimizer.com', '*.vwo.com', '*.visualwebsiteoptimizer.net'],
+      cookies: ['_vwo_uuid', '_vwo_uuid_v2', '_vwo_ds', '_vwo_sn', '_vis_opt_*', '_vwo_referrer'],
+      storageKeys: ['_vwo_*', 'vwo_*'],
+      privacyPolicyAliases: ['VWO', 'Visual Website Optimizer'],
+    }
+  - {
+      id: abtasty,
+      name: 'AB Tasty SAS',
+      country: FR,
+      category: analyse,
+      hosts: ['*.abtasty.com'],
+      cookies: ['ABTasty', 'ABTastySession', 'ABTastyData'],
+      storageKeys: ['ABTasty*'],
+      privacyPolicyAliases: ['AB Tasty'],
+    }
+  - {
+      id: kameleoon,
+      name: 'Kameleoon SAS',
+      country: FR,
+      category: analyse,
+      hosts: ['*.kameleoon.eu', '*.kameleoon.com'],
+      cookies: ['kameleoonVisitorCode', 'kameleoonVisitor*'],
+      storageKeys: ['kameleoon*'],
+      privacyPolicyAliases: ['Kameleoon'],
+    }
+  - {
+      id: leadfeeder,
+      name: 'Dealfront Group Oy (Leadfeeder)',
+      country: FI,
+      category: analyse,
+      hosts: ['*.leadfeeder.com', '*.lfeeder.com', '*.dealfront.com'],
+      cookies: ['_lfa', '_lfa_test_cookie_stored'],
+      privacyPolicyAliases: ['Leadfeeder', 'Dealfront'],
+    }
+  - {
+      id: leadinfo,
+      name: 'Leadinfo B.V.',
+      country: NL,
+      category: analyse,
+      hosts: ['*.leadinfo.net', '*.leadinfo.com'],
+      privacyPolicyAliases: ['Leadinfo'],
+    }
+  - {
+      id: albacross,
+      name: 'Albacross Nordic AB',
+      country: SE,
+      category: analyse,
+      hosts: ['*.albacross.com'],
+      privacyPolicyAliases: ['Albacross'],
+    }
+  - {
+      id: zoominfo,
+      name: 'ZoomInfo Technologies LLC',
+      country: US,
+      category: analyse,
+      hosts: ['*.zoominfo.com', '*.ziffstatic.com'],
+      privacyPolicyAliases: ['ZoomInfo'],
+    }
+  - {
+      id: qualtrics,
+      name: 'Qualtrics, LLC',
+      country: US,
+      category: analyse,
+      hosts: ['*.qualtrics.com'],
+      privacyPolicyAliases: ['Qualtrics'],
+    }
+  - {
+      id: surveymonkey,
+      name: 'SurveyMonkey / Momentive Inc. (Usabilla)',
+      country: US,
+      category: analyse,
+      hosts: ['*.surveymonkey.com', '*.surveymonkey.net', '*.usabilla.com'],
+      privacyPolicyAliases: ['SurveyMonkey', 'Usabilla'],
+    }
+  # ---------------------------------------------------------------- Werbung / AdTech
+  - {
+      id: criteo,
+      name: 'Criteo SA',
+      country: FR,
+      category: werbung,
+      hosts: ['*.criteo.com', '*.criteo.net'],
+      cookies: ['cto_bundle', 'cto_bidid', 'cto_lwid', 'cto_optout', 'uid@*.criteo.com'],
+      storageKeys: ['cto_*', 'criteo_*'],
+      privacyPolicyAliases: ['Criteo', 'Criteo Retargeting'],
+    }
+  - {
+      id: taboola,
+      name: 'Taboola.com Ltd.',
+      country: IL,
+      category: werbung,
+      hosts: ['*.taboola.com', '*.taboolasyndication.com'],
+      cookies:
+        [
+          't_gid',
+          't_pt_gid',
+          'taboola_*',
+          'trc_cookie_storage',
+          '_tb_t_ppg',
+          '_tb_sess_r',
+          'tbl_*',
+        ],
+      storageKeys: ['taboola*', 'tbl_*', '_tb_*'],
+      privacyPolicyAliases: ['Taboola'],
+    }
+  - {
+      id: outbrain,
+      name: 'Outbrain Inc.',
+      country: US,
+      category: werbung,
+      hosts: ['*.outbrain.com', '*.outbrainimg.com', '*.zemanta.com'],
+      cookies: ['obuid', 'outbrain_cid_fetch', 'ob_*', 'OB-USER-TOKEN', 'zuid'],
+      storageKeys: ['outbrain*', 'ob_*'],
+      privacyPolicyAliases: ['Outbrain', 'Zemanta'],
+    }
+  - {
+      id: amazon-ads,
+      name: 'Amazon.com, Inc. (Amazon Advertising)',
+      country: US,
+      category: werbung,
+      hosts:
+        [
+          '*.amazon-adsystem.com',
+          '*.media-amazon.com',
+          '*.ssl-images-amazon.com',
+          'aax-eu.amazon-adsystem.com',
+        ],
+      cookies: ['ad-id', 'ad-privacy', 'ob-*'],
+      privacyPolicyAliases:
+        ['Amazon Advertising', 'Amazon Partnerprogramm', 'Amazon Associates', 'Amazon Werbung'],
+    }
+  - {
+      id: adform,
+      name: 'Adform A/S',
+      country: DK,
+      category: werbung,
+      hosts: ['*.adform.net', '*.adformdsp.net', '*.adform.com'],
+      privacyPolicyAliases: ['Adform'],
+    }
+  - {
+      id: smartadserver,
+      name: 'Equativ / Smart AdServer SAS',
+      country: FR,
+      category: werbung,
+      hosts: ['*.smartadserver.com', '*.sascdn.com', '*.equativ.com'],
+      privacyPolicyAliases: ['Smart AdServer', 'Equativ'],
+    }
+  - {
+      id: indexexchange,
+      name: 'Index Exchange Inc.',
+      country: CA,
+      category: werbung,
+      hosts: ['*.casalemedia.com', '*.indexww.com'],
+      privacyPolicyAliases: ['Index Exchange'],
+    }
+  - {
+      id: pubmatic,
+      name: 'PubMatic, Inc.',
+      country: US,
+      category: werbung,
+      hosts: ['*.pubmatic.com'],
+      cookies: ['KADUSERCOOKIE', 'PUBMDCID', 'pubmatic*'],
+      privacyPolicyAliases: ['PubMatic'],
+    }
+  - {
+      id: magnite,
+      name: 'Magnite, Inc. (Rubicon Project)',
+      country: US,
+      category: werbung,
+      hosts: ['*.rubiconproject.com', '*.magnite.com'],
+      cookies: ['khaos', 'rpb', 'rsid'],
+      privacyPolicyAliases: ['Rubicon Project', 'Magnite'],
+    }
+  - {
+      id: openx,
+      name: 'OpenX Technologies, Inc.',
+      country: US,
+      category: werbung,
+      hosts: ['*.openx.net', '*.openx.com'],
+      cookies: ['i@*.openx.net', 'OAID'],
+      privacyPolicyAliases: ['OpenX'],
+    }
+  - {
+      id: xandr,
+      name: 'Microsoft Corporation (Xandr / AppNexus)',
+      country: US,
+      category: werbung,
+      hosts: ['*.adnxs.com', '*.adnxs-simple.com', '*.xandr.com'],
+      cookies: ['uuid2@*.adnxs.com', 'anj', 'XANDR_PANID'],
+      privacyPolicyAliases: ['Xandr', 'AppNexus'],
+    }
+  - {
+      id: thetradedesk,
+      name: 'The Trade Desk, Inc.',
+      country: US,
+      category: werbung,
+      hosts: ['*.adsrvr.org', '*.thetradedesk.com'],
+      cookies: ['TDID', 'TDCPM', 'TTDOptOut'],
+      privacyPolicyAliases: ['The Trade Desk'],
+    }
+  - {
+      id: quantcast,
+      name: 'Quantcast Corporation',
+      country: US,
+      category: werbung,
+      hosts: ['*.quantserve.com', '*.quantcount.com', '*.quantcast.com'],
+      cookies: ['__qca', 'mc@*.quantserve.com', 'd'],
+      privacyPolicyAliases: ['Quantcast'],
+    }
+  - {
+      id: lotame,
+      name: 'Lotame Solutions, Inc.',
+      country: US,
+      category: werbung,
+      hosts: ['*.crwdcntrl.net', '*.lotame.com'],
+      cookies: ['_cc_id', '_cc_aud', '_cc_cc', '_cc_dc'],
+      privacyPolicyAliases: ['Lotame'],
+    }
+  - {
+      id: liveramp,
+      name: 'LiveRamp Holdings, Inc.',
+      country: US,
+      category: werbung,
+      hosts: ['*.rlcdn.com', '*.liveramp.com', '*.pippio.com', '*.rlcdn.net'],
+      privacyPolicyAliases: ['LiveRamp'],
+    }
+  - {
+      id: bidswitch,
+      name: 'Iponweb (BidSwitch)',
+      country: US,
+      category: werbung,
+      hosts: ['*.bidswitch.net', '*.bidswitch.com'],
+      privacyPolicyAliases: ['BidSwitch'],
+    }
+  - {
+      id: teads,
+      name: 'Teads S.A.',
+      country: LU,
+      category: werbung,
+      hosts: ['*.teads.tv', '*.teads.com'],
+      privacyPolicyAliases: ['Teads'],
+    }
+  - {
+      id: sharethrough,
+      name: 'Sharethrough, Inc.',
+      country: US,
+      category: werbung,
+      hosts: ['*.sharethrough.com'],
+      privacyPolicyAliases: ['Sharethrough'],
+    }
+  - {
+      id: 33across,
+      name: '33Across, Inc.',
+      country: US,
+      category: werbung,
+      hosts: ['*.33across.com', '*.tynt.com'],
+      privacyPolicyAliases: ['33Across'],
+    }
+  - {
+      id: sovrn,
+      name: 'Sovrn Holdings, Inc.',
+      country: US,
+      category: werbung,
+      hosts: ['*.lijit.com', '*.sovrn.com'],
+      privacyPolicyAliases: ['Sovrn'],
+    }
+  - {
+      id: mediamath,
+      name: 'MediaMath, Inc.',
+      country: US,
+      category: werbung,
+      hosts: ['*.mathtag.com', '*.mediamath.com'],
+      privacyPolicyAliases: ['MediaMath'],
+    }
+  - {
+      id: tapad,
+      name: 'Tapad, Inc.',
+      country: US,
+      category: werbung,
+      hosts: ['*.tapad.com'],
+      privacyPolicyAliases: ['Tapad'],
+    }
+  - {
+      id: yahoo-ads,
+      name: 'Yahoo Inc. (Yahoo Advertising / Verizon Media)',
+      country: US,
+      category: werbung,
+      hosts:
+        [
+          '*.advertising.com',
+          'ads.yahoo.com',
+          'sp.analytics.yahoo.com',
+          '*.yahoo.com',
+          '*.yimg.com',
+          '*.aol.com',
+          '*.adtechus.com',
+        ],
+      cookies: ['A3', 'B@*.yahoo.com', 'GUC', 'A1', 'A1S'],
+      privacyPolicyAliases: ['Yahoo', 'Yahoo Advertising', 'Verizon Media'],
+    }
+  - {
+      id: oracle-bluekai,
+      name: 'Oracle Corporation (BlueKai / Moat)',
+      country: US,
+      category: werbung,
+      hosts: ['*.bluekai.com', '*.bkrtx.com', '*.moatads.com', '*.eloqua.com', '*.oraclecloud.com'],
+      cookies: ['bku', 'bkdc', '__bk_*'],
+      privacyPolicyAliases: ['Oracle BlueKai', 'Oracle Advertising', 'Eloqua'],
+    }
+  - {
+      id: doubleverify,
+      name: 'DoubleVerify Inc. / Integral Ad Science',
+      country: US,
+      category: werbung,
+      hosts: ['*.doubleverify.com', '*.adsafeprotected.com', '*.dv.tech', '*.iasds01.com'],
+      privacyPolicyAliases: ['DoubleVerify', 'Integral Ad Science'],
+    }
+  - {
+      id: rtbhouse,
+      name: 'RTB House S.A.',
+      country: PL,
+      category: werbung,
+      hosts: ['*.rtbhouse.com', '*.creativecdn.com', '*.rtbhouse.net'],
+      cookies: ['rtbh.*', '_rtbh*'],
+      privacyPolicyAliases: ['RTB House'],
+    }
+  - {
+      id: adroll,
+      name: 'NextRoll, Inc. (AdRoll)',
+      country: US,
+      category: werbung,
+      hosts: ['*.adroll.com', '*.nextroll.com'],
+      cookies: ['__adroll_fpc', '__ar_v4', '__adroll', '__adroll_shared'],
+      privacyPolicyAliases: ['AdRoll', 'NextRoll'],
+    }
+  - {
+      id: yieldlab,
+      name: 'Adscale / Yieldlab (Virtual Minds)',
+      country: DE,
+      category: werbung,
+      hosts: ['*.yieldlab.net', '*.yieldlab.de', '*.adscale.de'],
+      privacyPolicyAliases: ['Yieldlab', 'Adscale'],
+    }
+  - {
+      id: improvedigital,
+      name: 'Improve Digital (360 Yield)',
+      country: NL,
+      category: werbung,
+      hosts: ['*.360yield.com', '*.improvedigital.com'],
+      privacyPolicyAliases: ['Improve Digital'],
+    }
+  - {
+      id: adition,
+      name: 'ADITION technologies GmbH (Virtual Minds)',
+      country: DE,
+      category: werbung,
+      hosts: ['*.adition.com', '*.adition.net'],
+      privacyPolicyAliases: ['ADITION'],
+    }
+  - {
+      id: emetriq,
+      name: 'emetriq GmbH',
+      country: DE,
+      category: werbung,
+      hosts: ['*.emetriq.de', '*.emetriq.com'],
+      privacyPolicyAliases: ['emetriq'],
+    }
+  - {
+      id: nuggad,
+      name: 'Nugg.ad (Ströer Digital)',
+      country: DE,
+      category: werbung,
+      hosts: ['*.nuggad.net'],
+      cookies: ['nuggad', 'nuggn', 'nuggs'],
+      privacyPolicyAliases: ['nugg.ad'],
+    }
+  - {
+      id: ligatus,
+      name: 'Ligatus GmbH',
+      country: DE,
+      category: werbung,
+      hosts: ['*.ligatus.com', '*.ligatus.de'],
+      privacyPolicyAliases: ['Ligatus'],
+    }
+  - {
+      id: plista,
+      name: 'plista GmbH',
+      country: DE,
+      category: werbung,
+      hosts: ['*.plista.com'],
+      cookies: ['plista*'],
+      privacyPolicyAliases: ['plista'],
+    }
+  - {
+      id: stroeer,
+      name: 'Ströer SSP GmbH',
+      country: DE,
+      category: werbung,
+      hosts: ['*.stroeerdigitalgroup.de', '*.stroeerdigitalmedia.de', '*.stroeerdigital.de'],
+      privacyPolicyAliases: ['Ströer'],
+    }
+  - {
+      id: semasio,
+      name: 'Semasio GmbH',
+      country: DE,
+      category: werbung,
+      hosts: ['*.semasio.net'],
+      privacyPolicyAliases: ['Semasio'],
+    }
+  - {
+      id: zeotap,
+      name: 'Zeotap GmbH',
+      country: DE,
+      category: werbung,
+      hosts: ['*.zeotap.com'],
+      privacyPolicyAliases: ['Zeotap'],
+    }
+  - {
+      id: sirdata,
+      name: 'Sirdata SAS',
+      country: FR,
+      category: werbung,
+      hosts: ['*.sirdata.com', '*.sddan.com', '*.sirdata.io'],
+      privacyPolicyAliases: ['Sirdata'],
+    }
+  - {
+      id: seedtag,
+      name: 'Seedtag Advertising S.L.',
+      country: ES,
+      category: werbung,
+      hosts: ['*.seedtag.com'],
+      privacyPolicyAliases: ['Seedtag'],
+    }
+  - {
+      id: unruly,
+      name: 'Unruly Group (Nexxen)',
+      country: GB,
+      category: werbung,
+      hosts: ['*.unrulymedia.com', '*.nexxen.com', '*.tremorhub.com'],
+      privacyPolicyAliases: ['Unruly', 'Nexxen'],
+    }
+  # ---------------------------------------------------------------- Affiliate
+  - {
+      id: awin,
+      name: 'AWIN AG (Awin / ShareASale / Zanox)',
+      country: DE,
+      category: werbung,
+      hosts:
+        [
+          '*.awin1.com',
+          '*.dwin1.com',
+          '*.zenaps.com',
+          '*.zanox.com',
+          '*.zanox-affiliate.de',
+          '*.shareasale.com',
+          '*.shareasale-analytics.com',
+        ],
+      cookies: ['awc', 'bId', '_aw_m_*', 'awin_*'],
+      privacyPolicyAliases: ['Awin', 'Zanox', 'ShareASale'],
+    }
+  - {
+      id: tradedoubler,
+      name: 'Tradedoubler AB',
+      country: SE,
+      category: werbung,
+      hosts: ['*.tradedoubler.com', '*.tradedoubler.de', '*.tradedoubler.net'],
+      cookies: ['TD_*', 'tduid', 'TRADEDOUBLER*'],
+      privacyPolicyAliases: ['Tradedoubler'],
+    }
+  - {
+      id: belboon,
+      name: 'belboon GmbH',
+      country: DE,
+      category: werbung,
+      hosts: ['*.belboon.com', '*.belboon.de'],
+      privacyPolicyAliases: ['belboon'],
+    }
+  - {
+      id: adcell,
+      name: 'ADCELL (Firstlead GmbH)',
+      country: DE,
+      category: werbung,
+      hosts: ['*.adcell.de', '*.adcell.com'],
+      privacyPolicyAliases: ['ADCELL'],
+    }
+  - {
+      id: digistore24,
+      name: 'Digistore24 Inc.',
+      country: DE,
+      category: werbung,
+      hosts: ['*.digistore24.com', '*.digistore24-app.com'],
+      privacyPolicyAliases: ['Digistore24'],
+    }
+  - {
+      id: webgains,
+      name: 'Webgains Ltd.',
+      country: GB,
+      category: werbung,
+      hosts: ['*.webgains.com', '*.webgains.de'],
+      privacyPolicyAliases: ['Webgains'],
+    }
+  - {
+      id: impact,
+      name: 'Impact Tech, Inc.',
+      country: US,
+      category: werbung,
+      hosts: ['*.impactradius-event.com', '*.impact.com', '*.impactradius.com', '*.ojrq.net'],
+      cookies: ['irclickid', 'IR_*'],
+      privacyPolicyAliases: ['Impact', 'Impact Radius'],
+    }
+  - {
+      id: admitad,
+      name: 'Admitad GmbH',
+      country: DE,
+      category: werbung,
+      hosts: ['*.admitad.com', '*.admitad-connect.com'],
+      privacyPolicyAliases: ['Admitad'],
+    }
+  - {
+      id: kelkoo,
+      name: 'Kelkoo Group',
+      country: FR,
+      category: werbung,
+      hosts: ['*.kelkoo.com', '*.kelkoo.de'],
+      privacyPolicyAliases: ['Kelkoo'],
+    }
+  # ---------------------------------------------------------------- CDN
+  - {
+      id: cloudflare-cdnjs,
+      name: 'Cloudflare, Inc. (cdnjs)',
+      country: US,
+      category: cdn,
+      hosts: ['cdnjs.cloudflare.com'],
+      privacyPolicyAliases: ['cdnjs', 'Cloudflare cdnjs'],
+      fix: 'Bibliotheken von cdnjs herunterladen und selbst ausliefern.',
+    }
+  - {
+      id: cloudflare-turnstile,
+      name: 'Cloudflare, Inc. (Turnstile)',
+      country: US,
+      category: bot-schutz,
+      hosts: ['challenges.cloudflare.com'],
+      cookies: ['cf_clearance', '__cf_chl_*', 'cf_chl_*'],
+      necessaryCookies: ['cf_clearance', '__cf_chl_*', 'cf_chl_*'],
+      privacyPolicyAliases: ['Cloudflare Turnstile'],
+    }
+  - {
+      id: cloudflare-insights,
+      name: 'Cloudflare, Inc. (Web Analytics)',
+      country: US,
+      category: analyse,
+      hosts: ['static.cloudflareinsights.com', '*.cloudflareinsights.com'],
+      privacyPolicyAliases: ['Cloudflare Web Analytics'],
+    }
+  - {
+      id: cloudflare-stream,
+      name: 'Cloudflare, Inc. (Stream)',
+      country: US,
+      category: video,
+      hosts: ['*.cloudflarestream.com', '*.videodelivery.net'],
+      privacyPolicyAliases: ['Cloudflare Stream'],
+    }
+  - {
+      id: cloudflare,
+      name: 'Cloudflare, Inc.',
+      country: US,
+      category: cdn,
+      hosts:
+        [
+          '*.cloudflare.com',
+          '*.cloudflare.net',
+          '*.workers.dev',
+          '*.pages.dev',
+          '*.r2.dev',
+          '*.cloudflareaccess.com',
+        ],
+      cookies:
+        [
+          '__cf_bm',
+          '__cflb',
+          '_cfuvid',
+          'cf_clearance',
+          '__cfruid',
+          '__cfwaitingroom',
+          'cf_use_ob',
+        ],
+      necessaryCookies:
+        [
+          '__cf_bm',
+          '__cflb',
+          '_cfuvid',
+          'cf_clearance',
+          '__cfruid',
+          '__cfwaitingroom',
+          'cf_use_ob',
+        ],
+      privacyPolicyAliases: ['Cloudflare'],
+    }
+  - {
+      id: jsdelivr,
+      name: 'Prospect One (jsDelivr)',
+      country: PL,
+      category: cdn,
+      hosts: ['*.jsdelivr.net'],
+      privacyPolicyAliases: ['jsDelivr', 'cdn.jsdelivr.net'],
+      fix: 'Dateien von jsDelivr herunterladen und selbst ausliefern (z. B. per npm-Paket im eigenen Build).',
+    }
+  - {
+      id: unpkg,
+      name: 'UNPKG (Michael Jackson)',
+      country: US,
+      category: cdn,
+      hosts: ['unpkg.com', '*.unpkg.com'],
+      privacyPolicyAliases: ['unpkg'],
+    }
+  - {
+      id: bunny,
+      name: 'BunnyWay d.o.o. (Bunny CDN)',
+      country: SI,
+      category: cdn,
+      hosts: ['*.b-cdn.net', '*.bunny.net', '*.bunnycdn.com', '*.bunnycdn.ru'],
+      privacyPolicyAliases: ['Bunny CDN', 'BunnyCDN'],
+    }
+  - {
+      id: bunny-fonts,
+      name: 'BunnyWay d.o.o. (Bunny Fonts)',
+      country: SI,
+      category: fonts,
+      hosts: ['fonts.bunny.net'],
+      privacyPolicyAliases: ['Bunny Fonts'],
+      fix: 'Auch Bunny Fonts bei Bedarf lokal hosten, um jede Drittverbindung zu vermeiden.',
+    }
+  - {
+      id: akamai,
+      name: 'Akamai Technologies, Inc.',
+      country: US,
+      category: cdn,
+      hosts:
+        [
+          '*.akamaihd.net',
+          '*.akamaized.net',
+          '*.akamai.net',
+          '*.edgekey.net',
+          '*.edgesuite.net',
+          '*.akamaitechnologies.com',
+          '*.go-mpulse.net',
+          '*.akstat.io',
+        ],
+      cookies: ['_abck', 'bm_sz', 'ak_bmsc', 'bm_sv', 'bm_mi', 'akacd_*', 'akaas_*'],
+      necessaryCookies: ['_abck', 'bm_sz', 'ak_bmsc', 'bm_sv', 'bm_mi', 'akacd_*'],
+      privacyPolicyAliases: ['Akamai'],
+    }
+  - {
+      id: fastly,
+      name: 'Fastly, Inc.',
+      country: US,
+      category: cdn,
+      hosts: ['*.fastly.net', '*.fastly.com', '*.fastlylb.net', '*.fastly-edge.com'],
+      privacyPolicyAliases: ['Fastly'],
+    }
+  - {
+      id: cloudfront,
+      name: 'Amazon Web Services (CloudFront)',
+      country: US,
+      category: cdn,
+      hosts: ['*.cloudfront.net'],
+      privacyPolicyAliases: ['Amazon CloudFront', 'AWS CloudFront'],
+    }
+  - {
+      id: aws,
+      name: 'Amazon Web Services (S3 / AWS)',
+      country: US,
+      category: cdn,
+      hosts: ['*.amazonaws.com', '*.awsstatic.com', '*.amazonwebservices.com'],
+      privacyPolicyAliases: ['Amazon Web Services', 'AWS', 'Amazon S3'],
+    }
+  - {
+      id: keycdn,
+      name: 'KeyCDN (proinity LLC)',
+      country: CH,
+      category: cdn,
+      hosts: ['*.kxcdn.com', '*.keycdn.com'],
+      privacyPolicyAliases: ['KeyCDN'],
+    }
+  - {
+      id: stackpath,
+      name: 'StackPath / BootstrapCDN',
+      country: US,
+      category: cdn,
+      hosts:
+        [
+          '*.stackpathcdn.com',
+          '*.stackpathdns.com',
+          '*.bootstrapcdn.com',
+          '*.netdna-ssl.com',
+          '*.netdna-cdn.com',
+        ],
+      privacyPolicyAliases: ['StackPath', 'BootstrapCDN', 'MaxCDN'],
+    }
+  - {
+      id: cdn77,
+      name: 'DataCamp Limited (CDN77)',
+      country: GB,
+      category: cdn,
+      hosts: ['*.cdn77.org', '*.cdn77.com', '*.cdn77-ssl.net'],
+      privacyPolicyAliases: ['CDN77'],
+    }
+  - {
+      id: jquery-cdn,
+      name: 'OpenJS Foundation (jQuery CDN)',
+      country: US,
+      category: cdn,
+      hosts: ['code.jquery.com', '*.jquery.com'],
+      privacyPolicyAliases: ['jQuery CDN', 'code.jquery.com'],
+    }
+  - {
+      id: cloudinary,
+      name: 'Cloudinary Ltd.',
+      country: US,
+      category: cdn,
+      hosts: ['*.cloudinary.com'],
+      privacyPolicyAliases: ['Cloudinary'],
+    }
+  - {
+      id: imgix,
+      name: 'Zebrafish Labs, Inc. (imgix)',
+      country: US,
+      category: cdn,
+      hosts: ['*.imgix.net'],
+      privacyPolicyAliases: ['imgix'],
+    }
+  - {
+      id: cloudimage,
+      name: 'Scaleflex SAS (Cloudimage)',
+      country: FR,
+      category: cdn,
+      hosts: ['*.cloudimg.io', '*.filerobot.com'],
+      privacyPolicyAliases: ['Cloudimage', 'Filerobot'],
+    }
+  - {
+      id: gravatar,
+      name: 'Automattic Inc. (Gravatar)',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.gravatar.com'],
+      privacyPolicyAliases: ['Gravatar'],
+      fix: 'Gravatar-Avatare deaktivieren oder lokal zwischenspeichern (z. B. Plugin zum lokalen Hosten von Avataren).',
+    }
+  - {
+      id: wordpress-com-cdn,
+      name: 'Automattic Inc. (WordPress.com / Jetpack CDN)',
+      country: US,
+      category: cdn,
+      hosts: ['*.wp.com', '*.wordpress.com', '*.wpcdn.com'],
+      privacyPolicyAliases: ['Jetpack', 'WordPress.com', 'Jetpack Site Accelerator'],
+      fix: 'Jetpack-CDN/Site-Accelerator deaktivieren und Bilder sowie Skripte vom eigenen Server ausliefern.',
+    }
+  - {
+      id: wordpress-stats,
+      name: 'Automattic Inc. (WordPress.com Stats / Jetpack)',
+      country: US,
+      category: analyse,
+      hosts: ['stats.wp.com', 'pixel.wp.com', 'pixel.wordpress.com', 'stats.wordpress.com'],
+      cookies: ['tk_ai', 'tk_qs', 'tk_lr', 'tk_or', 'tk_r3d', 'wp-settings-*@*.wordpress.com'],
+      privacyPolicyAliases: ['Jetpack Statistiken', 'WordPress.com Stats'],
+    }
+  # ---------------------------------------------------------------- Fonts / Icons
+  - {
+      id: fontawesome,
+      name: 'Fonticons, Inc. (Font Awesome)',
+      country: US,
+      category: fonts,
+      hosts: ['*.fontawesome.com'],
+      privacyPolicyAliases: ['Font Awesome', 'FontAwesome'],
+      fix: 'Font Awesome als npm-Paket oder Download selbst hosten (Free-Variante) statt Kit/CDN zu verwenden.',
+    }
+  - {
+      id: monotype-fonts,
+      name: 'Monotype Imaging Inc. (Fonts.com)',
+      country: US,
+      category: fonts,
+      hosts: ['*.fonts.net', '*.fonts.com', '*.myfonts.net'],
+      privacyPolicyAliases: ['Fonts.com', 'MyFonts'],
+    }
+  - {
+      id: fontshare,
+      name: 'Indian Type Foundry (Fontshare)',
+      country: IN,
+      category: fonts,
+      hosts: ['*.fontshare.com'],
+      privacyPolicyAliases: ['Fontshare'],
+    }
+  - {
+      id: fontsquirrel-fontlibrary,
+      name: 'Fontspring / Fontlibrary',
+      country: US,
+      category: fonts,
+      hosts: ['*.fontspring.com', '*.fontlibrary.org'],
+      privacyPolicyAliases: ['Fontspring'],
+    }
+  - {
+      id: googleapis-icons,
+      name: 'Material Icons (Google LLC)',
+      country: US,
+      category: fonts,
+      hosts: ['*.material.io'],
+      privacyPolicyAliases: ['Material Icons'],
+    }
+  # ---------------------------------------------------------------- Video / Audio
+  - {
+      id: vimeo,
+      name: 'Vimeo.com, Inc.',
+      country: US,
+      category: video,
+      hosts: ['*.vimeo.com', 'vimeo.com', '*.vimeocdn.com'],
+      cookies:
+        [
+          'vuid',
+          '__cf_bm@*.vimeo.com',
+          'player',
+          '_abexps',
+          '_uetvid@*.vimeo.com',
+          'continuous_play_v3',
+          'vimeo_gdpr_optin',
+        ],
+      storageKeys: ['vimeo*'],
+      privacyPolicyAliases: ['Vimeo'],
+      fix: 'Vimeo-Videos erst nach Klick laden (Zwei-Klick-Lösung) oder mit dem DNT-Parameter (dnt=1) einbetten und dennoch Einwilligung einholen; alternativ Video selbst hosten.',
+    }
+  - {
+      id: dailymotion,
+      name: 'Dailymotion S.A.',
+      country: FR,
+      category: video,
+      hosts: ['*.dailymotion.com', '*.dmcdn.net', 'dai.ly'],
+      cookies: ['ts@*.dailymotion.com', 'v1st', 'dmvk', 'usprivacy'],
+      privacyPolicyAliases: ['Dailymotion'],
+    }
+  - {
+      id: wistia,
+      name: 'Wistia, Inc.',
+      country: US,
+      category: video,
+      hosts: ['*.wistia.com', '*.wistia.net', '*.wi.st'],
+      cookies: ['wistia-*', '__wistia*'],
+      storageKeys: ['wistia*'],
+      privacyPolicyAliases: ['Wistia'],
+    }
+  - {
+      id: vidyard,
+      name: 'Vidyard, Inc.',
+      country: CA,
+      category: video,
+      hosts: ['*.vidyard.com', '*.vidyarddev.com'],
+      cookies: ['vidyard*', '_vy_*'],
+      privacyPolicyAliases: ['Vidyard'],
+    }
+  - {
+      id: twitch,
+      name: 'Twitch Interactive, Inc.',
+      country: US,
+      category: video,
+      hosts: ['*.twitch.tv', '*.ttvnw.net', '*.jtvnw.net', '*.twitchcdn.net', '*.twitchapps.com'],
+      cookies:
+        [
+          'unique_id',
+          'unique_id_durable',
+          'twitch.lohp.countryCode',
+          'server_session_id',
+          'api_token',
+          'persistent',
+        ],
+      privacyPolicyAliases: ['Twitch'],
+    }
+  - {
+      id: brightcove,
+      name: 'Brightcove Inc.',
+      country: US,
+      category: video,
+      hosts: ['*.brightcove.com', '*.brightcove.net', '*.bcvp0rtal.com', '*.brightcovegallery.com'],
+      cookies: ['_bc_*', 'bcsession*'],
+      privacyPolicyAliases: ['Brightcove'],
+    }
+  - {
+      id: jwplayer,
+      name: 'JW Player (LongTail Ad Solutions)',
+      country: US,
+      category: video,
+      hosts: ['*.jwplayer.com', '*.jwpcdn.com', '*.jwpsrv.com', '*.jwplatform.com'],
+      cookies: ['jwplayer.*', 'jw*'],
+      storageKeys: ['jwplayer.*'],
+      privacyPolicyAliases: ['JW Player'],
+    }
+  - {
+      id: spotify,
+      name: 'Spotify AB',
+      country: SE,
+      category: video,
+      hosts: ['*.spotify.com', '*.scdn.co', '*.spotifycdn.com', 'spoti.fi'],
+      cookies: ['sp_t', 'sp_landing', 'sp_new', 'sp_dc', 'spotify-*', '_sp_*@*.spotify.com'],
+      privacyPolicyAliases: ['Spotify'],
+      fix: 'Spotify-Einbettungen erst nach Klick laden (Zwei-Klick-Lösung).',
+    }
+  - {
+      id: soundcloud,
+      name: 'SoundCloud Global Limited & Co. KG',
+      country: DE,
+      category: video,
+      hosts: ['*.soundcloud.com', '*.sndcdn.com'],
+      cookies: ['sc_anonymous_id', 'sclocale'],
+      privacyPolicyAliases: ['SoundCloud'],
+      fix: 'SoundCloud-Player erst nach Klick laden (Zwei-Klick-Lösung).',
+    }
+  - {
+      id: podigee,
+      name: 'Podigee GmbH',
+      country: DE,
+      category: video,
+      hosts: ['*.podigee.com', '*.podigee-cdn.net', '*.podigee.io'],
+      privacyPolicyAliases: ['Podigee'],
+    }
+  - {
+      id: loom,
+      name: 'Loom, Inc. (Atlassian)',
+      country: US,
+      category: video,
+      hosts: ['*.loom.com', '*.useloom.com'],
+      privacyPolicyAliases: ['Loom'],
+    }
+  - {
+      id: ardmediathek-embed,
+      name: 'ARD / ZDF Mediatheken (Einbettung)',
+      country: DE,
+      category: video,
+      hosts: ['*.ardmediathek.de', '*.ard.de', '*.zdf.de', '*.zdfmediathek.de', '*.arte.tv'],
+      privacyPolicyAliases: ['ARD Mediathek', 'ZDF Mediathek', 'ARTE'],
+    }
+  - {
+      id: streamable,
+      name: 'Streamable, Inc.',
+      country: US,
+      category: video,
+      hosts: ['*.streamable.com'],
+      privacyPolicyAliases: ['Streamable'],
+    }
+  - {
+      id: canva-figma,
+      name: 'Canva Pty Ltd. / Figma, Inc. (Embeds)',
+      country: AU,
+      category: sonstiges,
+      hosts: ['*.canva.com', '*.figma.com'],
+      privacyPolicyAliases: ['Canva', 'Figma'],
+    }
+  # ---------------------------------------------------------------- Karten
+  - {
+      id: openstreetmap,
+      name: 'OpenStreetMap Foundation',
+      country: GB,
+      category: karten,
+      hosts:
+        [
+          '*.tile.openstreetmap.org',
+          'tile.openstreetmap.org',
+          '*.openstreetmap.org',
+          '*.openstreetmap.de',
+          '*.tile.osm.org',
+        ],
+      privacyPolicyAliases: ['OpenStreetMap', 'OSM'],
+      fix: 'Tiles über eigenen Tile-Server oder einen datenschutzkonformen Anbieter in der EU beziehen; alternativ Karte erst nach Klick laden.',
+    }
+  - {
+      id: mapbox,
+      name: 'Mapbox, Inc.',
+      country: US,
+      category: karten,
+      hosts: ['*.mapbox.com', '*.tiles.mapbox.com', 'events.mapbox.com'],
+      privacyPolicyAliases: ['Mapbox'],
+    }
+  - {
+      id: here-maps,
+      name: 'HERE Global B.V.',
+      country: NL,
+      category: karten,
+      hosts: ['*.here.com', '*.hereapi.com', '*.ovi.com'],
+      privacyPolicyAliases: ['HERE Maps', 'HERE'],
+    }
+  - {
+      id: bing-maps,
+      name: 'Microsoft Corporation (Bing Maps)',
+      country: US,
+      category: karten,
+      hosts: ['*.virtualearth.net', '*.ecn.dev.virtualearth.net'],
+      privacyPolicyAliases: ['Bing Maps'],
+    }
+  - {
+      id: carto,
+      name: 'CARTO (CARTO Inc.)',
+      country: US,
+      category: karten,
+      hosts: ['*.cartocdn.com', '*.carto.com', '*.basemaps.cartocdn.com'],
+      privacyPolicyAliases: ['CARTO', 'CartoDB'],
+    }
+  - {
+      id: stadiamaps,
+      name: 'Stadia Maps, Inc.',
+      country: US,
+      category: karten,
+      hosts: ['*.stadiamaps.com', '*.stadiamaps.io'],
+      privacyPolicyAliases: ['Stadia Maps'],
+    }
+  - {
+      id: maptiler,
+      name: 'MapTiler AG',
+      country: CH,
+      category: karten,
+      hosts: ['*.maptiler.com'],
+      privacyPolicyAliases: ['MapTiler'],
+    }
+  - {
+      id: apple-mapkit,
+      name: 'Apple Inc. (MapKit JS)',
+      country: US,
+      category: karten,
+      hosts: ['*.apple-mapkit.com', '*.mapkit.apple.com'],
+      privacyPolicyAliases: ['Apple Maps', 'MapKit'],
+    }
+  - {
+      id: arcgis,
+      name: 'Esri Inc. (ArcGIS)',
+      country: US,
+      category: karten,
+      hosts: ['*.arcgis.com', '*.arcgisonline.com', '*.esri.com'],
+      privacyPolicyAliases: ['ArcGIS', 'Esri'],
+    }
+  - {
+      id: geoapify,
+      name: 'Geoapify GmbH',
+      country: DE,
+      category: karten,
+      hosts: ['*.geoapify.com'],
+      privacyPolicyAliases: ['Geoapify'],
+    }
+  - {
+      id: leaflet-cdn,
+      name: 'Leaflet (CDN)',
+      country: US,
+      category: cdn,
+      hosts: ['*.leafletjs.com'],
+      privacyPolicyAliases: ['Leaflet'],
+    }
+  # ---------------------------------------------------------------- Zahlung
+  - {
+      id: stripe,
+      name: 'Stripe Payments Europe, Ltd.',
+      country: IE,
+      thirdCountry: true,
+      category: zahlung,
+      hosts: ['*.stripe.com', '*.stripe.network', '*.stripecdn.com'],
+      cookies: ['__stripe_mid', '__stripe_sid', 'm@*.stripe.com', 'machine_identifier'],
+      necessaryCookies: ['__stripe_mid', '__stripe_sid', 'm@*.stripe.com'],
+      storageKeys: ['__stripe_*'],
+      privacyPolicyAliases: ['Stripe'],
+      fix: 'Stripe-Skripte nur auf Seiten mit Bezahlvorgang laden, nicht auf allen Seiten.',
+    }
+  - {
+      id: paypal,
+      name: 'PayPal (Europe) S.à r.l. et Cie, S.C.A.',
+      country: LU,
+      thirdCountry: true,
+      category: zahlung,
+      hosts:
+        [
+          '*.paypal.com',
+          '*.paypal.de',
+          '*.paypalobjects.com',
+          '*.paypal-community.com',
+          '*.paypal.me',
+          '*.braintreegateway.com',
+          '*.braintree-api.com',
+        ],
+      cookies:
+        [
+          'ts',
+          'ts_c',
+          'tsrce',
+          'x-pp-s',
+          'l7_az',
+          'nsid',
+          'enforce_policy',
+          'cookie_check',
+          'LANG@*.paypal.com',
+          'KHcl0EuY7AKSMgfvHl7J5E7hPtK',
+          'PYPF',
+          'X-PP-SILOVER',
+          'fn_dt',
+          'ui_experience',
+          'login_email',
+        ],
+      privacyPolicyAliases: ['PayPal'],
+      fix: 'PayPal-SDK nur auf Seiten mit Bezahlvorgang laden und erst nach Einwilligung bzw. beim Klick auf den Bezahlbutton nachladen.',
+    }
+  - {
+      id: klarna,
+      name: 'Klarna Bank AB (publ)',
+      country: SE,
+      category: zahlung,
+      hosts: ['*.klarna.com', '*.klarnacdn.net', '*.klarna.net', '*.klarnaservices.com'],
+      cookies: ['klarna*', '_klarna*'],
+      privacyPolicyAliases: ['Klarna', 'Sofort', 'SOFORT Überweisung'],
+    }
+  - {
+      id: adyen,
+      name: 'Adyen N.V.',
+      country: NL,
+      category: zahlung,
+      hosts: ['*.adyen.com', '*.adyenpayments.com', '*.adyen.link'],
+      privacyPolicyAliases: ['Adyen'],
+    }
+  - {
+      id: mollie,
+      name: 'Mollie B.V.',
+      country: NL,
+      category: zahlung,
+      hosts: ['*.mollie.com', '*.mollie.nl'],
+      privacyPolicyAliases: ['Mollie'],
+    }
+  - {
+      id: amazon-pay,
+      name: 'Amazon Payments Europe S.C.A.',
+      country: LU,
+      thirdCountry: true,
+      category: zahlung,
+      hosts:
+        [
+          '*.payments-amazon.com',
+          'pay.amazon.com',
+          '*.pay.amazon.com',
+          'static-eu.payments-amazon.com',
+        ],
+      privacyPolicyAliases: ['Amazon Pay'],
+    }
+  - {
+      id: payone,
+      name: 'PAYONE GmbH',
+      country: DE,
+      category: zahlung,
+      hosts: ['*.payone.com', '*.payone.de', '*.pay1.de', '*.payone.io'],
+      privacyPolicyAliases: ['PAYONE'],
+    }
+  - {
+      id: ratepay,
+      name: 'RatePAY GmbH',
+      country: DE,
+      category: zahlung,
+      hosts: ['*.ratepay.com', '*.ratepay.de'],
+      privacyPolicyAliases: ['RatePAY'],
+    }
+  - {
+      id: unzer,
+      name: 'Unzer GmbH (heidelpay)',
+      country: DE,
+      category: zahlung,
+      hosts: ['*.unzer.com', '*.heidelpay.com', '*.heidelpay.de', '*.unzer.io'],
+      privacyPolicyAliases: ['Unzer', 'heidelpay'],
+    }
+  - {
+      id: computop,
+      name: 'Computop Paygate GmbH',
+      country: DE,
+      category: zahlung,
+      hosts: ['*.computop-paygate.com', '*.computop.com'],
+      privacyPolicyAliases: ['Computop'],
+    }
+  - {
+      id: worldline,
+      name: 'Worldline (Ingenico / Ogone)',
+      country: FR,
+      category: zahlung,
+      hosts: ['*.worldline.com', '*.worldline-solutions.com', '*.ogone.com', '*.payengine.de'],
+      privacyPolicyAliases: ['Worldline', 'Ogone', 'Ingenico'],
+    }
+  - {
+      id: giropay,
+      name: 'paydirekt / giropay (Paydirekt GmbH)',
+      country: DE,
+      category: zahlung,
+      hosts: ['*.giropay.de', '*.paydirekt.de'],
+      privacyPolicyAliases: ['giropay', 'paydirekt'],
+    }
+  - {
+      id: apple-pay,
+      name: 'Apple Inc. (Apple Pay / Sign in with Apple)',
+      country: US,
+      category: zahlung,
+      hosts: ['applepay.cdn-apple.com', '*.apple.com', '*.cdn-apple.com', 'appleid.cdn-apple.com'],
+      privacyPolicyAliases: ['Apple Pay', 'Sign in with Apple'],
+    }
+  - {
+      id: shopify,
+      name: 'Shopify Inc.',
+      country: CA,
+      category: sonstiges,
+      hosts:
+        [
+          '*.shopify.com',
+          '*.myshopify.com',
+          '*.shopifycdn.com',
+          '*.shopifysvc.com',
+          '*.shopifycloud.com',
+          '*.shop.app',
+        ],
+      cookies:
+        [
+          '_shopify_y',
+          '_shopify_s',
+          '_shopify_sa_p',
+          '_shopify_sa_t',
+          '_shopify_ga',
+          '_shopify_evids',
+          '_shopify_fs',
+          '_shopify_d*',
+          '_orig_referrer',
+          '_landing_page',
+          'shopify_pay*',
+          '_shopify_tm',
+          '_shopify_tw',
+          '_s',
+          '_y',
+        ],
+      storageKeys: ['shopify*'],
+      privacyPolicyAliases: ['Shopify'],
+    }
+  # ---------------------------------------------------------------- Bot-Schutz
+  - {
+      id: hcaptcha,
+      name: 'Intuition Machines, Inc. (hCaptcha)',
+      country: US,
+      category: bot-schutz,
+      hosts: ['*.hcaptcha.com'],
+      cookies: ['hmt_id', 'hc_accessibility'],
+      storageKeys: ['hCaptcha*', 'hc_*'],
+      privacyPolicyAliases: ['hCaptcha'],
+    }
+  - {
+      id: friendlycaptcha,
+      name: 'Friendly Captcha GmbH',
+      country: DE,
+      category: bot-schutz,
+      hosts: ['*.friendlycaptcha.com', '*.friendlycaptcha.eu'],
+      privacyPolicyAliases: ['Friendly Captcha'],
+    }
+  - {
+      id: geetest,
+      name: 'GeeTest (Wuhan Jiyan)',
+      country: CN,
+      category: bot-schutz,
+      hosts: ['*.geetest.com', '*.geevisit.com'],
+      privacyPolicyAliases: ['GeeTest'],
+    }
+  - {
+      id: arkose,
+      name: 'Arkose Labs (FunCaptcha)',
+      country: US,
+      category: bot-schutz,
+      hosts: ['*.arkoselabs.com', '*.funcaptcha.com'],
+      privacyPolicyAliases: ['Arkose Labs', 'FunCaptcha'],
+    }
+  - {
+      id: datadome,
+      name: 'DataDome SAS',
+      country: FR,
+      category: bot-schutz,
+      hosts: ['*.datadome.co', '*.datadome.com'],
+      cookies: ['datadome'],
+      necessaryCookies: ['datadome'],
+      privacyPolicyAliases: ['DataDome'],
+    }
+  - {
+      id: humansecurity,
+      name: 'HUMAN Security (PerimeterX)',
+      country: US,
+      category: bot-schutz,
+      hosts:
+        [
+          '*.perimeterx.net',
+          '*.px-cdn.net',
+          '*.px-cloud.net',
+          '*.pxchk.net',
+          '*.humansecurity.com',
+          '*.px-client.net',
+        ],
+      cookies: ['_px', '_px2', '_px3', '_pxvid', 'pxcts', '_pxhd', '_pxff_*', '_pxmvid'],
+      necessaryCookies: ['_px', '_px2', '_px3', '_pxvid', 'pxcts', '_pxhd'],
+      privacyPolicyAliases: ['PerimeterX', 'HUMAN Security'],
+    }
+  - {
+      id: imperva,
+      name: 'Imperva, Inc. (Incapsula)',
+      country: US,
+      category: bot-schutz,
+      hosts: ['*.incapdns.net', '*.imperva.com', '*.incapsula.com'],
+      cookies: ['incap_ses_*', 'visid_incap_*', 'nlbi_*', 'reese84', '___utmvc'],
+      necessaryCookies: ['incap_ses_*', 'visid_incap_*', 'nlbi_*', 'reese84', '___utmvc'],
+      privacyPolicyAliases: ['Imperva', 'Incapsula'],
+    }
+  - {
+      id: sucuri,
+      name: 'Sucuri (GoDaddy)',
+      country: US,
+      category: bot-schutz,
+      hosts: ['*.sucuri.net'],
+      cookies: ['sucuri_cloudproxy_*'],
+      necessaryCookies: ['sucuri_cloudproxy_*'],
+      privacyPolicyAliases: ['Sucuri'],
+    }
+  - {
+      id: mtcaptcha,
+      name: 'MTCaptcha (MTCaptcha Pte. Ltd.)',
+      country: SG,
+      category: bot-schutz,
+      hosts: ['*.mtcaptcha.com'],
+      privacyPolicyAliases: ['MTCaptcha'],
+    }
+  # ---------------------------------------------------------------- Chat / Support
+  - {
+      id: userlike,
+      name: 'Userlike UG (haftungsbeschränkt)',
+      country: DE,
+      category: chat,
+      hosts: ['*.userlike.com', '*.userlike-cdn-widgets.s3-eu-west-1.amazonaws.com'],
+      cookies: ['userlike*', 'uslk_*'],
+      storageKeys: ['userlike*', 'uslk_*'],
+      privacyPolicyAliases: ['Userlike'],
+    }
+  - {
+      id: zendesk,
+      name: 'Zendesk, Inc.',
+      country: US,
+      category: chat,
+      hosts:
+        ['*.zendesk.com', '*.zdassets.com', '*.zopim.com', '*.zdusercontent.com', '*.zdsys.com'],
+      cookies:
+        [
+          '__zlcmid',
+          '_zendesk_*',
+          '__zprivacy',
+          'ZD-*',
+          '_help_center_session',
+          '__cfruid@*.zendesk.com',
+        ],
+      storageKeys: ['ZD-*', 'zE*', '__zlcstore'],
+      privacyPolicyAliases: ['Zendesk', 'Zopim'],
+    }
+  - {
+      id: intercom,
+      name: 'Intercom R&D Unlimited Company',
+      country: IE,
+      thirdCountry: true,
+      category: chat,
+      hosts: ['*.intercom.io', '*.intercomcdn.com', '*.intercom.com', '*.intercomassets.com'],
+      cookies: ['intercom-id-*', 'intercom-session-*', 'intercom-device-id-*'],
+      storageKeys: ['intercom.*'],
+      privacyPolicyAliases: ['Intercom'],
+    }
+  - {
+      id: drift,
+      name: 'Drift.com, Inc. (Salesloft)',
+      country: US,
+      category: chat,
+      hosts: ['*.drift.com', '*.driftt.com', '*.driftcdn.com'],
+      cookies: ['driftt_aid', 'drift_aid', 'driftt_sid', 'drift_campaign_refresh', 'drift_eid'],
+      storageKeys: ['drift*'],
+      privacyPolicyAliases: ['Drift'],
+    }
+  - {
+      id: livechat,
+      name: 'LiveChat Software S.A.',
+      country: PL,
+      category: chat,
+      hosts: ['*.livechatinc.com', '*.livechat.com', '*.livechatinc.net', '*.text.com'],
+      cookies:
+        [
+          '__lc_cid',
+          '__lc_cst',
+          '__lc2_cid',
+          '__lc2_cst',
+          '__lc_visitor_id',
+          '__livechat*',
+          '__lc.*',
+        ],
+      storageKeys: ['__lc*'],
+      privacyPolicyAliases: ['LiveChat'],
+    }
+  - {
+      id: tawkto,
+      name: 'tawk.to, Inc.',
+      country: US,
+      category: chat,
+      hosts: ['*.tawk.to'],
+      cookies: ['Tawk*', 'TawkConnectionTime', 'tawkUUID', '__tawkuuid'],
+      storageKeys: ['Tawk_*', 'twk_*'],
+      privacyPolicyAliases: ['tawk.to', 'Tawk.to'],
+    }
+  - {
+      id: crisp,
+      name: 'Crisp IM SAS',
+      country: FR,
+      category: chat,
+      hosts: ['*.crisp.chat', '*.crisp.help'],
+      cookies: ['crisp-client*'],
+      storageKeys: ['crisp*'],
+      privacyPolicyAliases: ['Crisp'],
+    }
+  - {
+      id: tidio,
+      name: 'Tidio Sp. z o.o.',
+      country: PL,
+      category: chat,
+      hosts: ['*.tidio.co', '*.tidiochat.com', '*.tidio.com', '*.tidio.net'],
+      cookies: ['tidio*'],
+      storageKeys: ['tidio*'],
+      privacyPolicyAliases: ['Tidio'],
+    }
+  - {
+      id: freshworks,
+      name: 'Freshworks Inc. (Freshchat / Freshdesk)',
+      country: US,
+      category: chat,
+      hosts: ['*.freshchat.com', '*.freshworks.com', '*.freshdesk.com', '*.freshworksapi.com'],
+      cookies: ['_fw_crm_v', 'fc_*', 'freshchat*'],
+      storageKeys: ['fc_*', 'freshchat*'],
+      privacyPolicyAliases: ['Freshchat', 'Freshdesk', 'Freshworks'],
+    }
+  - {
+      id: smartsupp,
+      name: 'Smartsupp.com, s.r.o.',
+      country: CZ,
+      category: chat,
+      hosts: ['*.smartsupp.com', '*.smartsuppchat.com'],
+      cookies: ['ssupp.*', 'smartsupp*'],
+      privacyPolicyAliases: ['Smartsupp'],
+    }
+  - {
+      id: jivochat,
+      name: 'JivoChat (Jivo)',
+      country: RU,
+      category: chat,
+      hosts: ['*.jivosite.com', '*.jivo.chat', '*.jivo.ru'],
+      cookies: ['jv_*', 'jv-*'],
+      privacyPolicyAliases: ['JivoChat'],
+    }
+  - {
+      id: olark,
+      name: 'Olark Group, Inc.',
+      country: US,
+      category: chat,
+      hosts: ['*.olark.com'],
+      cookies: ['olarkuser', 'hblid', 'olfsk'],
+      privacyPolicyAliases: ['Olark'],
+    }
+  - {
+      id: chatwoot,
+      name: 'Chatwoot (Chatwoot Inc.)',
+      country: US,
+      category: chat,
+      hosts: ['*.chatwoot.com'],
+      privacyPolicyAliases: ['Chatwoot'],
+    }
+  - {
+      id: whatsapp-chat-plugins,
+      name: 'Trengo / MessageBird Chat-Widgets',
+      country: NL,
+      category: chat,
+      hosts: ['*.trengo.com', '*.messagebird.com', '*.bird.com'],
+      privacyPolicyAliases: ['Trengo', 'MessageBird'],
+    }
+  - {
+      id: userway,
+      name: 'UserWay Inc. (Barrierefreiheits-Overlay)',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.userway.org'],
+      privacyPolicyAliases: ['UserWay'],
+    }
+  - {
+      id: eaccessibe,
+      name: 'accessiBe Ltd.',
+      country: IL,
+      category: sonstiges,
+      hosts: ['*.accessibe.com', '*.acsbapp.com', '*.acsbap.com'],
+      privacyPolicyAliases: ['accessiBe'],
+    }
+  - {
+      id: calendly,
+      name: 'Calendly LLC',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.calendly.com'],
+      privacyPolicyAliases: ['Calendly'],
+    }
+  # ---------------------------------------------------------------- Marketing-Automation / CRM / Formulare
+  - {
+      id: hubspot,
+      name: 'HubSpot Ireland Ltd. (HubSpot)',
+      country: IE,
+      thirdCountry: true,
+      category: analyse,
+      hosts:
+        [
+          '*.hubspot.com',
+          '*.hs-scripts.com',
+          '*.hs-analytics.net',
+          '*.hsforms.net',
+          '*.hsforms.com',
+          '*.hubapi.com',
+          '*.usemessages.com',
+          '*.hscollectedforms.net',
+          '*.hsadspixel.net',
+          '*.hs-sites.com',
+          '*.hubspotusercontent*.net',
+          '*.hscta.net',
+          '*.hsleadflows.net',
+          '*.hubspotlinks.com',
+          '*.hs-embed-reporting.com',
+        ],
+      cookies:
+        [
+          'hubspotutk',
+          '__hstc',
+          '__hssc',
+          '__hssrc',
+          'messagesUtk',
+          '__hs_do_not_track',
+          '__hs_initial_opt_in',
+          'hs-messages-hide-welcome-banner',
+          '__cf_bm@*.hubspot.com',
+          'hs_ab_test',
+          '__ptq_*',
+          '_hjid@*.hubspot.com',
+        ],
+      storageKeys: ['hs_*', 'hubspot*', 'hs-*'],
+      privacyPolicyAliases: ['HubSpot', 'HubSpot Formulare', 'HubSpot Tracking', 'HubSpot Chat'],
+      fix: 'HubSpot-Tracking-Code erst nach Einwilligung laden (HubSpot-Banner oder CMP-Blockierung); Formulare ggf. über eigene Einbindung realisieren.',
+    }
+  - {
+      id: hubspot-consent,
+      name: 'HubSpot Ireland Ltd. (HubSpot Cookie-Banner)',
+      country: IE,
+      thirdCountry: true,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.hs-banner.com'],
+      cookies:
+        ['__hs_opt_out', '__hs_initial_opt_in', '__hs_cookie_cat_pref', '__hs_gpc_banner_dismiss'],
+      privacyPolicyAliases: ['HubSpot Cookie-Banner'],
+    }
+  - {
+      id: mailchimp,
+      name: 'Intuit Inc. (Mailchimp)',
+      country: US,
+      category: sonstiges,
+      hosts:
+        [
+          '*.mailchimp.com',
+          '*.chimpstatic.com',
+          '*.list-manage.com',
+          '*.mcusercontent.com',
+          '*.mailchi.mp',
+          '*.mcdlv.net',
+        ],
+      cookies: ['mailchimp_landing_site', '_mcid', 'mc_*', '_mkto_*@*.mailchimp.com'],
+      privacyPolicyAliases: ['Mailchimp', 'MailChimp'],
+    }
+  - {
+      id: brevo,
+      name: 'Sendinblue GmbH / Brevo (Sendinblue SAS)',
+      country: FR,
+      category: analyse,
+      hosts:
+        [
+          '*.brevo.com',
+          '*.sendinblue.com',
+          '*.sibautomation.com',
+          '*.sibforms.com',
+          '*.sendibt2.com',
+          '*.sendibt3.com',
+          '*.sibnet.com',
+          '*.brevo.cn',
+        ],
+      cookies: ['sib_cuid', 'sib_*', 'brevo*'],
+      storageKeys: ['sib_*', 'sendinblue*'],
+      privacyPolicyAliases: ['Brevo', 'Sendinblue'],
+    }
+  - {
+      id: klaviyo,
+      name: 'Klaviyo, Inc.',
+      country: US,
+      category: analyse,
+      hosts: ['*.klaviyo.com', '*.klaviyomail.com'],
+      cookies: ['__kla_id', '_kla_*', 'klaviyo_*'],
+      storageKeys: ['klaviyo*', 'kl_*'],
+      privacyPolicyAliases: ['Klaviyo'],
+    }
+  - {
+      id: activecampaign,
+      name: 'ActiveCampaign, LLC',
+      country: US,
+      category: analyse,
+      hosts:
+        [
+          '*.activehosted.com',
+          '*.activecampaign.com',
+          '*.trackcmp.net',
+          '*.acems1.com',
+          '*.acems3.com',
+        ],
+      cookies: ['prism_*', 'ac_*'],
+      privacyPolicyAliases: ['ActiveCampaign'],
+    }
+  - {
+      id: cleverreach,
+      name: 'CleverReach GmbH & Co. KG',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.cleverreach.com', '*.cleverreach.de', '*.cleverreach.eu'],
+      privacyPolicyAliases: ['CleverReach'],
+    }
+  - {
+      id: rapidmail,
+      name: 'rapidmail GmbH',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.rapidmail.com', '*.rapidmail.de', '*.emailsys*.net', '*.emailsys1.net'],
+      privacyPolicyAliases: ['rapidmail'],
+    }
+  - {
+      id: mailjet,
+      name: 'Mailjet SAS (Sinch)',
+      country: FR,
+      category: sonstiges,
+      hosts: ['*.mailjet.com', '*.mjt.lu'],
+      privacyPolicyAliases: ['Mailjet'],
+    }
+  - {
+      id: salesforce-pardot,
+      name: 'Salesforce, Inc. (Pardot / Marketing Cloud)',
+      country: US,
+      category: analyse,
+      hosts:
+        [
+          '*.pardot.com',
+          '*.salesforce.com',
+          '*.force.com',
+          '*.exacttarget.com',
+          '*.salesforceliveagent.com',
+          '*.sfmc-content.com',
+          '*.krxd.net',
+        ],
+      cookies: ['visitor_id*', 'pardot', 'lpv*', 'pi_opt_in*', 'pctrk', '_pardot*'],
+      privacyPolicyAliases: ['Pardot', 'Salesforce', 'Salesforce Marketing Cloud'],
+    }
+  - {
+      id: marketo,
+      name: 'Adobe Inc. (Marketo)',
+      country: US,
+      category: analyse,
+      hosts: ['*.marketo.com', '*.marketo.net', '*.mktoresp.com', '*.mktoweb.com', '*.mktossl.com'],
+      cookies: ['_mkto_trk'],
+      privacyPolicyAliases: ['Marketo'],
+    }
+  - {
+      id: pipedrive,
+      name: 'Pipedrive, Inc.',
+      country: US,
+      category: chat,
+      hosts: ['*.pipedrive.com', '*.pipedriveassets.com'],
+      privacyPolicyAliases: ['Pipedrive'],
+    }
+  - {
+      id: typeform,
+      name: 'TYPEFORM SL',
+      country: ES,
+      category: sonstiges,
+      hosts: ['*.typeform.com'],
+      privacyPolicyAliases: ['Typeform'],
+    }
+  - {
+      id: jotform,
+      name: 'Jotform Inc.',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.jotform.com', '*.jotform.eu', '*.jotformeu.com'],
+      privacyPolicyAliases: ['Jotform'],
+    }
+  - {
+      id: airtable,
+      name: 'Formagrid, Inc. (Airtable)',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.airtable.com'],
+      privacyPolicyAliases: ['Airtable'],
+    }
+  - {
+      id: tally,
+      name: 'Tally B.V.',
+      country: BE,
+      category: sonstiges,
+      hosts: ['*.tally.so'],
+      privacyPolicyAliases: ['Tally'],
+    }
+  - {
+      id: acuity,
+      name: 'Squarespace, Inc. (Acuity Scheduling)',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.acuityscheduling.com', '*.squarespacescheduling.com'],
+      privacyPolicyAliases: ['Acuity Scheduling'],
+    }
+  - {
+      id: doodle,
+      name: 'Doodle AG',
+      country: CH,
+      category: sonstiges,
+      hosts: ['*.doodle.com'],
+      privacyPolicyAliases: ['Doodle'],
+    }
+  - {
+      id: timify,
+      name: 'TIMIFY GmbH',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.timify.com'],
+      privacyPolicyAliases: ['TIMIFY'],
+    }
+  - {
+      id: shore,
+      name: 'Shore GmbH',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.shore.com'],
+      privacyPolicyAliases: ['Shore'],
+    }
+  - {
+      id: doctolib,
+      name: 'Doctolib GmbH',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.doctolib.de', '*.doctolib.fr', '*.doctolib.com'],
+      privacyPolicyAliases: ['Doctolib'],
+    }
+  - {
+      id: jameda,
+      name: 'Jameda GmbH',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.jameda.de'],
+      privacyPolicyAliases: ['Jameda'],
+    }
+  - {
+      id: eventbrite,
+      name: 'Eventbrite, Inc.',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.eventbrite.com', '*.eventbrite.de', '*.evbuc.com'],
+      privacyPolicyAliases: ['Eventbrite'],
+    }
+  - {
+      id: opentable,
+      name: 'OpenTable, Inc. (Booking Holdings)',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.opentable.com', '*.opentable.de'],
+      privacyPolicyAliases: ['OpenTable'],
+    }
+  - {
+      id: resmio,
+      name: 'resmio GmbH',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.resmio.com'],
+      privacyPolicyAliases: ['resmio'],
+    }
+  - {
+      id: booking,
+      name: 'Booking.com B.V.',
+      country: NL,
+      category: sonstiges,
+      hosts: ['*.booking.com', '*.bstatic.com'],
+      privacyPolicyAliases: ['Booking.com'],
+    }
+  - {
+      id: tripadvisor,
+      name: 'Tripadvisor LLC',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.tripadvisor.com', '*.tripadvisor.de', '*.tacdn.com', '*.tamgrt.com'],
+      cookies: ['TASession', 'TAUnique', 'TADCID', 'TART', 'TASID', 'TAReturnTo'],
+      privacyPolicyAliases: ['Tripadvisor'],
+    }
+  - {
+      id: personio,
+      name: 'Personio SE & Co. KG',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.personio.de', '*.personio.com', '*.personio.io'],
+      privacyPolicyAliases: ['Personio'],
+    }
+  - {
+      id: join-com,
+      name: 'JOIN Solutions AG',
+      country: CH,
+      category: sonstiges,
+      hosts: ['*.join.com'],
+      privacyPolicyAliases: ['JOIN'],
+    }
+  - {
+      id: softgarden,
+      name: 'softgarden e-recruiting GmbH',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.softgarden.io', '*.softgarden.de'],
+      privacyPolicyAliases: ['softgarden'],
+    }
+  # ---------------------------------------------------------------- Bewertungen / Vertrauen
+  - {
+      id: trustedshops,
+      name: 'Trusted Shops SE',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.trustedshops.com', '*.trustedshops.de', '*.trustedshops.eu', '*.trstd.shop'],
+      cookies: ['ts-*', 'TS_*'],
+      storageKeys: ['trustedshops*', 'ts-*'],
+      privacyPolicyAliases: ['Trusted Shops', 'Trustbadge'],
+      fix: 'Trustbadge/Bewertungswidgets erst nach Einwilligung laden oder in der Datenschutzerklärung mit Rechtsgrundlage nennen; Verbindung wird beim Laden des Badges aufgebaut.',
+    }
+  - {
+      id: ekomi,
+      name: 'eKomi Ltd.',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.ekomi.de', '*.ekomi.com', '*.ekomiapps.de', '*.ekomi-us.com'],
+      privacyPolicyAliases: ['eKomi'],
+    }
+  - {
+      id: provenexpert,
+      name: 'Expert Systems AG (ProvenExpert)',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.provenexpert.com'],
+      privacyPolicyAliases: ['ProvenExpert'],
+    }
+  - {
+      id: trustpilot,
+      name: 'Trustpilot A/S',
+      country: DK,
+      category: sonstiges,
+      hosts: ['*.trustpilot.com'],
+      cookies: ['TP.uuid', '_tpsd*', 'trustpilot*'],
+      privacyPolicyAliases: ['Trustpilot'],
+    }
+  - {
+      id: kununu,
+      name: 'kununu GmbH (New Work SE)',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.kununu.com'],
+      privacyPolicyAliases: ['kununu'],
+    }
+  - {
+      id: yotpo,
+      name: 'Yotpo Ltd.',
+      country: IL,
+      category: sonstiges,
+      hosts: ['*.yotpo.com'],
+      cookies: ['yotpo_*'],
+      privacyPolicyAliases: ['Yotpo'],
+    }
+  - {
+      id: bazaarvoice,
+      name: 'Bazaarvoice, Inc.',
+      country: US,
+      category: sonstiges,
+      hosts: ['*.bazaarvoice.com', '*.bvapi.com'],
+      privacyPolicyAliases: ['Bazaarvoice'],
+    }
+  - {
+      id: shopauskunft,
+      name: 'Shopauskunft (Shopauskunft GmbH)',
+      country: DE,
+      category: sonstiges,
+      hosts: ['*.shopauskunft.de'],
+      privacyPolicyAliases: ['Shopauskunft'],
+    }
+  # ---------------------------------------------------------------- Website-Baukästen
+  - {
+      id: wix,
+      name: 'Wix.com Ltd.',
+      country: IL,
+      category: cdn,
+      hosts:
+        [
+          '*.wix.com',
+          '*.wixstatic.com',
+          '*.parastorage.com',
+          '*.wixapps.net',
+          '*.wixsite.com',
+          '*.wixdns.net',
+        ],
+      cookies:
+        [
+          'XSRF-TOKEN@*.wix.com',
+          'svSession',
+          'hs',
+          'ssr-caching',
+          '_wixAB3',
+          'TS*',
+          '_wix_browser_sess',
+          'bSession',
+        ],
+      necessaryCookies: ['XSRF-TOKEN@*.wix.com', 'hs', 'ssr-caching'],
+      privacyPolicyAliases: ['Wix'],
+    }
+  - {
+      id: squarespace,
+      name: 'Squarespace, Inc.',
+      country: US,
+      category: cdn,
+      hosts: ['*.squarespace.com', '*.sqspcdn.com', '*.squarespace-cdn.com', '*.sqsp.net'],
+      cookies: ['crumb', 'ss_cvr', 'ss_cvt', 'SS_ANALYTICS_ID', 'SS_MATTR'],
+      necessaryCookies: ['crumb'],
+      privacyPolicyAliases: ['Squarespace'],
+    }
+  - {
+      id: webflow,
+      name: 'Webflow, Inc.',
+      country: US,
+      category: cdn,
+      hosts: ['*.webflow.com', '*.website-files.com', '*.webflow.io'],
+      privacyPolicyAliases: ['Webflow'],
+    }
+  - {
+      id: jimdo,
+      name: 'Jimdo GmbH',
+      country: DE,
+      category: cdn,
+      hosts: ['*.jimdo.com', '*.jimcdn.com', '*.jimdosite.com', '*.jimdofree.com'],
+      privacyPolicyAliases: ['Jimdo'],
+    }
+  - {
+      id: ionos-website,
+      name: 'IONOS SE (MyWebsite)',
+      country: DE,
+      category: cdn,
+      hosts:
+        [
+          '*.website-start.de',
+          '*.mywebsite-editor.com',
+          '*.1and1.com',
+          '*.ionos.de',
+          '*.ionos.com',
+          '*.1und1.de',
+        ],
+      privacyPolicyAliases: ['IONOS', '1&1 IONOS', 'IONOS MyWebsite'],
+    }
+  - {
+      id: strato-website,
+      name: 'STRATO GmbH (Homepage-Baukasten)',
+      country: DE,
+      category: cdn,
+      hosts: ['*.strato.de', '*.strato-editor.com', '*.strato-hosting.de', '*.strato.com'],
+      privacyPolicyAliases: ['STRATO'],
+    }
+  - {
+      id: godaddy-website,
+      name: 'GoDaddy Inc. (Websites + Marketing)',
+      country: US,
+      category: cdn,
+      hosts: ['*.godaddy.com', '*.secureserver.net', '*.wsimg.com'],
+      privacyPolicyAliases: ['GoDaddy'],
+    }
+  # ---------------------------------------------------------------- Tag-Manager / CDP
+  - {
+      id: tealium,
+      name: 'Tealium Inc.',
+      country: US,
+      category: tag-manager,
+      hosts: ['*.tiqcdn.com', '*.tealiumiq.com', '*.tealium.com', '*.tealium.hs.llnwd.net'],
+      cookies: ['utag_main', 'utag_main_*', 'TAEUID', 'tealium_*'],
+      storageKeys: ['utag_*', 'tealium_*'],
+      privacyPolicyAliases: ['Tealium'],
+    }
+  - {
+      id: ensighten,
+      name: 'Ensighten, Inc.',
+      country: US,
+      category: tag-manager,
+      hosts: ['*.ensighten.com'],
+      cookies: ['ENSIGHTEN_PRIVACY_*'],
+      privacyPolicyAliases: ['Ensighten'],
+    }
+  - {
+      id: commanders-act,
+      name: 'Commanders Act SAS (TagCommander)',
+      country: FR,
+      category: tag-manager,
+      hosts: ['*.tagcommander.com', '*.commander1.com', '*.commandersact.com'],
+      cookies: ['TCSESSION', 'TCID', 'tc_*', 'TCPID'],
+      privacyPolicyAliases: ['Commanders Act', 'TagCommander'],
+    }
+  - {
+      id: commanders-act-privacy,
+      name: 'Commanders Act SAS (Privacy Center)',
+      country: FR,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.trustcommander.net'],
+      cookies: ['TC_PRIVACY', 'TC_PRIVACY_CENTER', 'TC_PRIVACY_*'],
+      privacyPolicyAliases: ['TrustCommander', 'Commanders Act Privacy'],
+    }
+  # ---------------------------------------------------------------- CMP / Consent-Manager (isCmp)
+  - {
+      id: usercentrics,
+      name: 'Usercentrics GmbH',
+      country: DE,
+      category: cmp,
+      isCmp: true,
+      hosts:
+        [
+          '*.usercentrics.eu',
+          '*.usercentrics.com',
+          'app.usercentrics.eu',
+          '*.consent.usercentrics.eu',
+        ],
+      cookies: ['uc_user_interaction', 'uc_settings', 'uc_ui_version', 'ucData'],
+      storageKeys: ['uc_settings', 'uc_user_interaction', 'uc_ui_version', 'ucData', 'uc_*'],
+      privacyPolicyAliases: ['Usercentrics', 'Usercentrics Consent Management Platform'],
+    }
+  - {
+      id: ccm19,
+      name: 'papoo Software & Media GmbH (CCM19)',
+      country: DE,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.ccm19.de', '*.ccm19.com'],
+      cookies: ['ccm_consent', 'ccm_consent_*', 'ccm19*'],
+      storageKeys: ['ccm_consent', 'ccm_consent_*', 'ccm19*'],
+      privacyPolicyAliases: ['CCM19', 'Cookie Consent Manager CCM19'],
+    }
+  - {
+      id: cookiebot,
+      name: 'Usercentrics A/S (Cookiebot)',
+      country: DK,
+      category: cmp,
+      isCmp: true,
+      hosts:
+        [
+          '*.cookiebot.com',
+          '*.cookiebot.eu',
+          'consent.cookiebot.com',
+          'consentcdn.cookiebot.com',
+          'imgsct.cookiebot.com',
+        ],
+      cookies: ['CookieConsent', 'CookieConsentBulkTicket', 'CookieConsentBulkSetting-*'],
+      storageKeys: ['CookieConsent*', 'cookiebot*'],
+      privacyPolicyAliases: ['Cookiebot'],
+    }
+  - {
+      id: onetrust,
+      name: 'OneTrust Technology Limited (OneTrust)',
+      country: GB,
+      category: cmp,
+      isCmp: true,
+      hosts:
+        ['*.cookielaw.org', '*.onetrust.com', '*.onetrust.eu', '*.cookiepro.com', '*.onetrust.io'],
+      cookies:
+        [
+          'OptanonConsent',
+          'OptanonAlertBoxClosed',
+          'OnetrustActiveGroups',
+          'OneTrustWPCCPAGoogleOptOut',
+          'OptanonControl',
+          'eupubconsent*',
+          'usprivacy',
+          'OTGPPConsent',
+        ],
+      storageKeys:
+        [
+          'OptanonConsent',
+          'OptanonAlertBoxClosed',
+          'OnetrustActiveGroups',
+          'onetrust*',
+          'OneTrust*',
+        ],
+      privacyPolicyAliases: ['OneTrust', 'CookiePro'],
+    }
+  - {
+      id: borlabs-cookie,
+      name: 'Borlabs GmbH (Borlabs Cookie, selbst gehostet)',
+      country: DE,
+      category: cmp,
+      isCmp: true,
+      hosts: [],
+      cookies: ['borlabs-cookie', 'borlabs-cookie-*', 'borlabs-cookie-opt-in'],
+      storageKeys: ['borlabs-cookie*'],
+      privacyPolicyAliases: ['Borlabs Cookie', 'Borlabs'],
+    }
+  - {
+      id: consentmanager,
+      name: 'Jost Hemminger / consentmanager AB',
+      country: SE,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.consentmanager.net', '*.consentmanager.com', '*.consentmanager.mgr.consensu.org'],
+      cookies:
+        [
+          '__cmpconsent*',
+          '__cmpcc*',
+          '__cmpcvc*',
+          '__cmpiab*',
+          '__cmpcccx*',
+          '__cmpcpcx*',
+          '__cmpwtp*',
+          '__cmpiuid*',
+          '__cmp*',
+        ],
+      storageKeys: ['__cmp*'],
+      privacyPolicyAliases: ['consentmanager', 'consentmanager.net'],
+    }
+  - {
+      id: sourcepoint,
+      name: 'Sourcepoint Technologies, Inc.',
+      country: US,
+      category: cmp,
+      isCmp: true,
+      hosts:
+        [
+          '*.sp-prod.net',
+          '*.privacy-mgmt.com',
+          '*.sourcepoint.mgr.consensu.org',
+          '*.sourcepoint.com',
+          '*.sp-stage.net',
+        ],
+      cookies:
+        ['consentUUID', 'consentUUID_*', '_sp_su', '_sp_user_consent_*', 'sp_su', '_sp_v1_*'],
+      storageKeys: ['_sp_*', 'sp_*', 'consentUUID'],
+      privacyPolicyAliases: ['Sourcepoint'],
+    }
+  - {
+      id: trustarc,
+      name: 'TrustArc Inc.',
+      country: US,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.trustarc.com', '*.truste.com', '*.trustarc.eu', '*.truste-svc.net'],
+      cookies:
+        [
+          'notice_preferences',
+          'notice_gdpr_prefs',
+          'cmapi_cookie_privacy',
+          'cmapi_gtm_bl',
+          'TAconsentID',
+          'notice_behavior',
+          'truste.*',
+        ],
+      storageKeys: ['truste.*', 'notice_*'],
+      privacyPolicyAliases: ['TrustArc', 'TRUSTe'],
+    }
+  - {
+      id: didomi,
+      name: 'Didomi SAS',
+      country: FR,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.privacy-center.org', '*.didomi.io', '*.didomi.eu'],
+      cookies: ['didomi_token', 'euconsent-v2', 'didomi_ln', 'didomi-*'],
+      storageKeys: ['didomi_*', 'didomi*'],
+      privacyPolicyAliases: ['Didomi'],
+    }
+  - {
+      id: klaro,
+      name: 'KIProtect / Klaro',
+      country: DE,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.kiprotect.com', '*.klaro.cloud', '*.klaro.kiprotect.com'],
+      cookies: ['klaro', 'klaro-*', 'klaro_*'],
+      storageKeys: ['klaro', 'klaro-*', 'klaro_*'],
+      privacyPolicyAliases: ['Klaro', 'Klaro Consent Manager'],
+    }
+  - {
+      id: cookieinformation,
+      name: 'Cookie Information A/S',
+      country: DK,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.cookieinformation.com'],
+      cookies: ['CookieInformationConsent', 'CookieInformationConsent_*', 'CookieInformation*'],
+      storageKeys: ['CookieInformation*'],
+      privacyPolicyAliases: ['Cookie Information'],
+    }
+  - {
+      id: complianz,
+      name: 'Complianz (Really Simple Plugins B.V.)',
+      country: NL,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.complianz.io'],
+      cookies: ['cmplz_*', 'complianz_*', 'cmplz-*'],
+      storageKeys: ['cmplz_*'],
+      privacyPolicyAliases: ['Complianz', 'Complianz GDPR/CCPA Cookie Consent'],
+    }
+  - {
+      id: cookie-notice-wp,
+      name: 'Cookie Notice & Compliance (dFactory)',
+      country: PL,
+      category: cmp,
+      isCmp: true,
+      hosts: [],
+      cookies: ['cookie_notice_accepted', 'cn_*', 'hu-consent*'],
+      privacyPolicyAliases: ['Cookie Notice'],
+    }
+  - {
+      id: real-cookie-banner,
+      name: 'devowl.io GmbH (Real Cookie Banner)',
+      country: DE,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.devowl.io', '*.real-cookie-banner.com'],
+      cookies: ['real_cookie_banner*', 'real-cookie-banner*'],
+      storageKeys: ['real_cookie_banner*'],
+      privacyPolicyAliases: ['Real Cookie Banner', 'devowl.io'],
+    }
+  - {
+      id: cookieyes,
+      name: 'CookieYes Limited',
+      country: GB,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.cookieyes.com', '*.cdn-cookieyes.com'],
+      cookies:
+        [
+          'cookieyes-consent',
+          'cookieyes-*',
+          'cookielawinfo-checkbox-*',
+          'viewed_cookie_policy',
+          'CookieLawInfoConsent',
+          'cky-*',
+        ],
+      storageKeys: ['cookieyes*', 'cky*'],
+      privacyPolicyAliases: ['CookieYes', 'Cookie Law Info'],
+    }
+  - {
+      id: iubenda,
+      name: 'iubenda S.r.l.',
+      country: IT,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.iubenda.com'],
+      cookies: ['_iub_cs-*', '_iub_cs', 'usprivacy', '_iub_*'],
+      storageKeys: ['_iub_*', 'iub*'],
+      privacyPolicyAliases: ['iubenda'],
+    }
+  - {
+      id: cookiefirst,
+      name: 'Digital Data Solutions B.V. (CookieFirst)',
+      country: NL,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.cookiefirst.com'],
+      cookies: ['cookiefirst-consent', 'cookiefirst-*'],
+      storageKeys: ['cookiefirst*'],
+      privacyPolicyAliases: ['CookieFirst'],
+    }
+  - {
+      id: osano,
+      name: 'Osano, Inc.',
+      country: US,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.osano.com'],
+      cookies: ['osano_consentmanager', 'osano_consentmanager_uuid', 'osano_*'],
+      storageKeys: ['osano_*'],
+      privacyPolicyAliases: ['Osano'],
+    }
+  - {
+      id: axeptio,
+      name: 'Axeptio SAS',
+      country: FR,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.axept.io', '*.axeptio.eu'],
+      cookies:
+        ['axeptio_authorized_vendors', 'axeptio_cookies', 'axeptio_all_vendors', 'axeptio_*'],
+      storageKeys: ['axeptio_*'],
+      privacyPolicyAliases: ['Axeptio'],
+    }
+  - {
+      id: cookie-script,
+      name: 'Cookie-Script.com (Objectis)',
+      country: LT,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.cookie-script.com'],
+      cookies: ['CookieScriptConsent', 'CookieScriptConsent*'],
+      storageKeys: ['CookieScriptConsent'],
+      privacyPolicyAliases: ['Cookie-Script'],
+    }
+  - {
+      id: cookiehub,
+      name: 'CookieHub ehf.',
+      country: IS,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.cookiehub.net', '*.cookiehub.com'],
+      cookies: ['cookiehub'],
+      storageKeys: ['cookiehub*'],
+      privacyPolicyAliases: ['CookieHub'],
+    }
+  - {
+      id: quantcast-choice,
+      name: 'Quantcast Corporation (Quantcast Choice)',
+      country: US,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.quantcast.mgr.consensu.org', 'quantcast.mgr.consensu.org', '*.consensu.org'],
+      cookies: ['euconsent-v2', 'euconsent', 'addtl_consent', '__gpi_optout'],
+      storageKeys: ['euconsent*', 'addtl_consent'],
+      privacyPolicyAliases: ['Quantcast Choice'],
+    }
+  - {
+      id: civic-cookie-control,
+      name: 'Civic Computing Ltd. (Cookie Control)',
+      country: GB,
+      category: cmp,
+      isCmp: true,
+      hosts: ['*.civiccomputing.com'],
+      cookies: ['civicCookieControl', 'CookieControl'],
+      privacyPolicyAliases: ['Civic Cookie Control'],
+    }
+  - {
+      id: cookieconsent-osano-oss,
+      name: 'Cookie Consent (Open-Source-Banner, selbst gehostet)',
+      country: DE,
+      thirdCountry: false,
+      category: cmp,
+      isCmp: true,
+      hosts: [],
+      cookies:
+        [
+          'cookieconsent_status',
+          'cookieconsent_*',
+          'cookie_consent',
+          'cookies_accepted',
+          'cookie-consent',
+          'cookie_consent_*',
+          'wp_consent_*',
+          'wpconsent*',
+          'moove_gdpr_popup',
+          'euCookie',
+          'cookie_accepted',
+        ],
+      storageKeys: ['cookieconsent_*', 'cookie_consent', 'cookie-consent', 'cookieConsent'],
+      privacyPolicyAliases: ['Cookie Consent'],
+    }
+  - {
+      id: shopify-consent,
+      name: 'Shopify Inc. (Customer Privacy / Consent)',
+      country: CA,
+      category: cmp,
+      isCmp: true,
+      hosts: [],
+      cookies: ['_tracking_consent', '_cmp_a', 'cookie_consent_*'],
+      privacyPolicyAliases: ['Shopify Customer Privacy'],
+    }
+  - {
+      id: tcf-generic,
+      name: 'IAB TCF (generische Consent-Cookies)',
+      country: BE,
+      category: cmp,
+      isCmp: true,
+      hosts: [],
+      cookies: ['euconsent-v2', 'eupubconsent-v2', 'usprivacy', 'gpp_*', '__gpp*'],
+      storageKeys: ['euconsent-v2', 'eupubconsent-v2', 'usprivacy', '_sp_*consent*'],
+      privacyPolicyAliases: ['IAB TCF'],
+    }

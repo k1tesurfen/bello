@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Chromium (mit Systemabhängigkeiten)
+        run: pnpm exec playwright install --with-deps chromium
+        if: runner.os == 'Linux'
+      - name: Install Chromium
+        run: pnpm exec playwright install chromium
+        if: runner.os != 'Linux'
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm test
+
+  licenses:
+    name: Lizenz-Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lizenzen der Produktions-Abhängigkeiten prüfen
+        run: pnpm license:check
+
+  # Prüft, dass `bello setup` pro Distribution die richtigen Pakete nennt:
+  # setup -> ausgegebenen Paketbefehl ausführen -> doctor --offline -> Tests.
+  distro:
+    name: Distro (${{ matrix.image }})
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['debian:13', 'fedora:latest', 'archlinux:latest']
+    env:
+      NO_COLOR: '1'
+      CI: 'true'
+    steps:
+      - name: Basis-Werkzeuge installieren
+        shell: sh
+        run: |
+          if command -v apt-get >/dev/null; then
+            apt-get update && apt-get install -y ca-certificates curl xz-utils git procps
+          elif command -v dnf >/dev/null; then
+            dnf install -y ca-certificates curl xz git procps-ng which
+          elif command -v pacman >/dev/null; then
+            pacman -Syu --noconfirm ca-certificates curl xz git procps-ng which
+          fi
+      - uses: actions/checkout@v4
+      - name: Node.js 22 und pnpm installieren
+        shell: bash
+        run: |
+          set -euo pipefail
+          file=$(curl -fsSL https://nodejs.org/dist/latest-v22.x/SHASUMS256.txt | grep -o 'node-v22[^ ]*-linux-x64.tar.xz' | head -1)
+          curl -fsSL "https://nodejs.org/dist/latest-v22.x/${file}" | tar -xJ -C /usr/local --strip-components=1
+          node --version
+          npm install -g pnpm@9
+      - name: Abhängigkeiten installieren und bauen
+        shell: bash
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+      - name: bello setup (gibt den Paketbefehl aus)
+        shell: bash
+        run: |
+          node dist/cli/index.js setup 2>&1 | tee setup.log || true
+      - name: Ausgegebenen Paketbefehl ausführen
+        shell: bash
+        run: |
+          # Im Container laeuft alles als root, daher ohne sudo.
+          cmd=$(grep -E '^\s*sudo ' setup.log | head -1 | sed -E 's/^\s*sudo //')
+          if [ -n "$cmd" ]; then
+            echo "Fuehre aus: $cmd"
+            if command -v apt-get >/dev/null; then apt-get update; fi
+            if command -v pacman >/dev/null; then pacman -Sy --noconfirm; fi
+            sh -c "$cmd"
+          else
+            echo "Kein Paketbefehl ausgegeben (alle Bibliotheken vorhanden)."
+          fi
+      - name: bello doctor --offline
+        shell: bash
+        run: node dist/cli/index.js doctor --offline
+      - name: Tests
+        shell: bash
+        run: pnpm test

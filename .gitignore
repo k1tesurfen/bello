@@ -1,0 +1,6 @@
+node_modules/
+dist/
+bello-reports/
+coverage/
+*.log
+.DS_Store

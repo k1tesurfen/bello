@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>SP Consent Message</title>
+<style>
+  body { font: 14px sans-serif; margin: 0; padding: 20px; }
+  .row { display: flex; gap: 10px; margin-top: 12px; }
+  button { padding: 10px 16px; }
+</style>
+</head>
+<body>
+<h2>Herzlich willkommen</h2>
+<p>Wir und unsere Partner setzen Cookies und Tracking-Technologien ein. Durch Klicken auf
+  „Zustimmen“ willigen Sie in die Verarbeitung ein. Unter Einstellungen können Sie einzelne
+  Datenverarbeitungen ablehnen. Weitere Details finden Sie in der Datenschutzerklärung.</p>
+<p id="pur-text" hidden>Mit unserem Pur-Abo nutzen Sie die Seite ohne Tracking für 4,95 € / Monat.</p>
+<div class="row" id="row1">
+  <button class="message-component message-button cmp-button sp_choice_type_11" data-choice="accept">Zustimmen</button>
+  <button class="message-component message-button sp_choice_type_13" data-choice="reject" id="reject">Alle ablehnen</button>
+  <a href="#" class="text-link" id="pur" hidden>Pur-Abo abschließen</a>
+</div>
+<div class="row">
+  <button class="message-component message-button settings-button sp_choice_type_12" data-choice="pm">Einstellungen</button>
+</div>
+<script>
+  var variant = new URLSearchParams(location.search).get('variant') || 'standard';
+  if (variant !== 'standard') document.getElementById('reject').remove();
+  if (variant === 'pur') {
+    document.getElementById('pur').hidden = false;
+    document.getElementById('pur-text').hidden = false;
+  }
+  document.querySelectorAll('[data-choice]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      parent.postMessage({ sp: 'choice', choice: b.getAttribute('data-choice') }, '*');
+    });
+  });
+  document.getElementById('pur').addEventListener('click', function (e) { e.preventDefault(); });
+</script>
+</body>
+</html>

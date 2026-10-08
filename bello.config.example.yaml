@@ -1,0 +1,36 @@
+# Bello – Beispielkonfiguration. Kopieren nach bello.config.yaml und anpassen.
+# Für Ad-hoc-Scans (bello example.de) ist keine Konfiguration nötig.
+# Unbekannte Schlüssel werden als Fehler gemeldet. Relative Pfade (logo,
+# vendorsFile) beziehen sich auf den Ordner dieser Datei.
+
+company:
+  name: 'Ihre Firma GmbH' # erscheint im Report-Kopf
+  logo: ./assets/logo.svg # optional, relativ zu dieser Datei
+  colors: { primary: '#0a5' } # Akzentfarbe der Reports
+  contact: 'datenschutz@ihre-firma.de'
+
+defaults:
+  outDir: ./bello-reports # Ausgabeordner (relativ zum Arbeitsverzeichnis)
+  waitSeconds: 10 # Wartezeit des „passiven Lesers"
+  crawl:
+    maxPages: 200 # max. Seiten pro Site
+    delayMs: 2000 # Pause zwischen Seitenaufrufen
+    sitesInParallel: 3 # parallele Sites im Nacht-Batch
+
+customers:
+  acme: # Kunden-ID (für --customer acme)
+    name: 'ACME GmbH'
+    url: https://www.acme.de
+    crawl: true # im Nacht-Batch vollständig crawlen
+    # maxPages: 100                 # optional: überschreibt defaults.crawl.maxPages
+    # delayMs: 3000                 # optional
+    # waitSeconds: 15               # optional
+    firstPartyAliases: [acme-cdn.de, static.acme.com] # gelten als First-Party
+    allowedProcessors: # bewusst erlaubte Auftragsverarbeiter
+      - host: '*.b-cdn.net' # Host-Glob
+        reason: 'CDN, AVV vom 2026-03-01'
+        # avv: ./avv/bunny.pdf      # optional: Verweis auf den AVV
+    banner:
+      rejectSelector: '#uc-deny' # optional: „Ablehnen"-Button, falls nicht erkannt
+      # acceptSelector: "#uc-accept"
+    vendorsFile: ./vendors.acme.yaml # optionale Ergänzungen zur Anbieterliste

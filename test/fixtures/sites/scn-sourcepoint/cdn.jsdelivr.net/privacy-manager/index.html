@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>SP Privacy Manager</title>
+<style>
+  body { font: 13px sans-serif; margin: 0; padding: 16px; }
+  .stack-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+  .pur-buttons-container button { margin-left: 6px; }
+  .type-modal { display: block; }
+</style>
+</head>
+<body>
+<div class="type-modal">
+<h2>Einstellungen</h2>
+<p>Bitte treffen Sie für folgende Datenverarbeitungen eine Auswahl. Ihre Einwilligung können Sie
+  jederzeit widerrufen (Datenschutzerklärung).</p>
+<p id="pur-hint" hidden>Beachten Sie, dass bei Nutzung ohne Pur-Abo stets eine Zustimmung in
+  personalisierte Werbung erforderlich ist.</p>
+<div id="purposes">
+  <div class="stack-row" data-purpose="1"><span>Speichern von oder Zugriff auf Informationen</span>
+    <div class="pur-buttons-container"><button data-v="1">Zustimmen</button><button data-v="0">Ablehnen</button></div></div>
+  <div class="stack-row" data-purpose="2"><span>Personalisierte Werbung mit Profilbildung</span>
+    <div class="pur-buttons-container"><button data-v="1">Zustimmen</button><button data-v="0" class="ad-reject">Ablehnen</button></div></div>
+  <div class="stack-row" data-purpose="3"><span>Externe Inhalte anzeigen</span>
+    <div class="pur-buttons-container"><button data-v="1">Zustimmen</button><button data-v="0">Ablehnen</button></div></div>
+</div>
+<div class="row">
+  <button class="message-component message-button sp_choice_type_REJECT_ALL" id="reject-all">Alle ablehnen</button>
+  <button class="message-component message-button cmp-button sp_choice_type_SAVE_AND_EXIT" id="save">Ausgewähltem zustimmen</button>
+  <button class="message-component message-button sp_choice_type_ACCEPT_ALL" data-choice="accept">Alle akzeptieren</button>
+  <a href="#" id="pur" hidden>Pur-Abo abschließen</a>
+</div>
+</div>
+<script>
+  var variant = new URLSearchParams(location.search).get('variant') || 'standard';
+  var save = document.getElementById('save');
+  var send = function (choice) { parent.postMessage({ sp: 'choice', choice: choice }, '*'); };
+  if (variant === 'pur') {
+    // Consent or pay: advertising purpose cannot be rejected, no "reject all", save disabled
+    // until every purpose is decided – and then it can only be a consent.
+    document.getElementById('reject-all').remove();
+    document.querySelector('.ad-reject').remove();
+    document.getElementById('pur').hidden = false;
+    document.getElementById('pur-hint').hidden = false;
+    save.disabled = true;
+    save.setAttribute('aria-disabled', 'true');
+  }
+  document.getElementById('reject-all') &&
+    document.getElementById('reject-all').addEventListener('click', function () { send('reject'); });
+  document.querySelector('[data-choice="accept"]').addEventListener('click', function () { send('accept'); });
+  save.addEventListener('click', function () { if (!save.disabled) send('accept'); });
+  document.querySelectorAll('.pur-buttons-container button').forEach(function (b) {
+    b.addEventListener('click', function () { b.parentElement.setAttribute('data-decided', b.getAttribute('data-v')); });
+  });
+</script>
+</body>
+</html>

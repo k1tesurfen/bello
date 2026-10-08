@@ -1,0 +1,10 @@
+node_modules
+dist
+bello-reports
+coverage
+.git
+.github
+test
+*.log
+.DS_Store
+PLAN.md

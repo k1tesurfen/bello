@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Kunde Test – Renderer hängt</title>
+</head>
+<body>
+<h1>Kunde Test</h1>
+<p>Nach dem Laden blockiert ein Script den Renderer dauerhaft.</p>
+<script>
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      for (;;) {
+        /* busy forever */
+      }
+    }, 200);
+  });
+</script>
+</body>
+</html>

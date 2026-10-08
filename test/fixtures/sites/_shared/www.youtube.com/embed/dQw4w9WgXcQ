@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+<head><title>YouTube-Embed (Fixture)</title></head>
+<body>
+<img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" alt="">
+<script>
+  // Simulated player telemetry, sent by script inside the cross-site iframe. Uses fetch():
+  // `new Image().src` starts loading in a microtask without a JS stack, and Chromium then
+  // reports the initiator as "parser" with the document position.
+  setTimeout(function sendTelemetry() {
+    fetch('https://stats.g.doubleclick.net/collect?v=1', { mode: 'no-cors' });
+  }, 0);
+</script>
+</body>
+</html>

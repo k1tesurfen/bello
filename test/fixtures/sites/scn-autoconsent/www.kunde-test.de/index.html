@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Kunde Test – autoconsent</title>
+</head>
+<body>
+<h1>Kunde Test</h1>
+<!-- Markup of a CMP known to @duckduckgo/autoconsent (rule "abconcerts.be"). -->
+<dialog class="cookie-consent" open style="position:fixed;bottom:0;margin:0;width:100%">
+  <form class="cookie-consent__form" onsubmit="return false">
+    <p>Diese Website verwendet Cookies. Mit Ihrer Einwilligung laden wir Google-Dienste.</p>
+    <button type="button" value="no">Weiter ohne Einwilligung</button>
+    <button type="button" value="yes">Zustimmen</button>
+  </form>
+</dialog>
+<div style="height:2000px"></div>
+<script>
+  (function () {
+    var dlg = document.querySelector('dialog.cookie-consent');
+    dlg.querySelector('button[value=no]').addEventListener('click', function () { dlg.close(); });
+    dlg.querySelector('button[value=yes]').addEventListener('click', function () {
+      dlg.close();
+      var s = document.createElement('script');
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-AC';
+      document.head.appendChild(s);
+    });
+  })();
+</script>
+</body>
+</html>

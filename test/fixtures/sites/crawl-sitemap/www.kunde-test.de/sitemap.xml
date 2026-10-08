@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>http://www.kunde-test.de/</loc></url>
+  <url><loc>http://www.kunde-test.de/a.html?utm_source=x</loc></url>
+  <url><loc>http://www.kunde-test.de/b.html#frag</loc></url>
+</urlset>
