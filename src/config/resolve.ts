@@ -9,6 +9,8 @@ export interface CliFlags {
   crawl?: boolean;
   pages?: number;
   out?: string;
+  /** --here: reports go to <cwd>/bello-reports. */
+  here?: boolean;
   proxy?: string;
   identify?: boolean;
   rejectSelector?: string;
@@ -28,8 +30,9 @@ export interface ScanOptions {
   delayMs: number;
   sitesInParallel: number;
   waitSeconds: number;
-  /** Absolute output directory (relative values resolve against cwd). */
+  /** Absolute report root. */
   outDir: string;
+  outDirSource: ReportRootSource;
   proxy?: string;
   identify: boolean;
   rejectSelector?: string;
@@ -40,6 +43,44 @@ export interface ScanOptions {
   allowedProcessors: AllowedProcessor[];
   vendorsFile?: string;
   company: BelloConfig['company'];
+}
+
+export type ReportRootSource = 'out' | 'here' | 'config' | 'cwd';
+export interface ReportRoot {
+  dir: string;
+  source: ReportRootSource;
+}
+
+/** Report root precedence: --out > --here > config defaults.outDir > <cwd>/bello-reports. */
+export function resolveReportRoot(
+  config: BelloConfig,
+  flags: Pick<CliFlags, 'out' | 'here'> = {},
+  cwd: string = process.cwd(),
+): ReportRoot {
+  if (flags.out !== undefined && flags.here) {
+    throw new ConfigError(
+      '--out und --here schließen sich aus. Bitte nur eine der Optionen angeben.',
+    );
+  }
+  if (flags.out !== undefined) return { dir: path.resolve(cwd, flags.out), source: 'out' };
+  if (flags.here) return { dir: path.resolve(cwd, 'bello-reports'), source: 'here' };
+  if (config.defaults.outDir !== undefined)
+    return { dir: config.defaults.outDir, source: 'config' };
+  return { dir: path.resolve(cwd, 'bello-reports'), source: 'cwd' };
+}
+
+/** German reason for where the report root comes from. */
+export function describeReportRoot(source: ReportRootSource, configPath: string | null): string {
+  switch (source) {
+    case 'out':
+      return 'per --out';
+    case 'here':
+      return 'per --here im aktuellen Verzeichnis';
+    case 'config':
+      return `aus Konfiguration ${configPath ?? '(unbekannt)'}`;
+    case 'cwd':
+      return 'aktuelles Verzeichnis';
+  }
 }
 
 export function normalizeUrl(input: string): string {
@@ -70,6 +111,7 @@ export function resolveScanOptions(
     throw new ConfigError('Keine URL angegeben (URL oder --customer erforderlich).');
 
   const d = config.defaults;
+  const root = resolveReportRoot(config, flags, cwd);
   const maxPages = flags.pages ?? customer?.maxPages ?? d.pages ?? d.crawl.maxPages;
   const rejectSelector = flags.rejectSelector ?? customer?.banner.rejectSelector;
   const acceptSelector = flags.acceptSelector ?? customer?.banner.acceptSelector;
@@ -82,7 +124,8 @@ export function resolveScanOptions(
     delayMs: customer?.delayMs ?? d.crawl.delayMs,
     sitesInParallel: d.crawl.sitesInParallel,
     waitSeconds: flags.wait ?? customer?.waitSeconds ?? d.waitSeconds,
-    outDir: path.resolve(cwd, flags.out ?? d.outDir),
+    outDir: root.dir,
+    outDirSource: root.source,
     ...(flags.proxy !== undefined && { proxy: flags.proxy }),
     identify: flags.identify ?? false,
     ...(rejectSelector !== undefined && { rejectSelector }),

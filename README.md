@@ -33,7 +33,17 @@ Bello benötigt nur **Node.js ≥ 22**, **pnpm** und das von Playwright selbst h
 
 ## Installation
 
-Bello wird aus dem Repo installiert (kein npm-Paket):
+Bello wird aus dem Repo installiert (kein npm-Paket). Der einfachste Weg (macOS und Linux):
+
+```bash
+git clone https://github.com/k1tesurfen/bello && cd bello && ./install.sh
+```
+
+`install.sh` prüft Schritt für Schritt, was fehlt (Node.js 22, pnpm, Abhängigkeiten, Build, Chromium, Datendateien, Systembibliotheken unter Linux), zeigt jeweils den genauen Befehl und fragt vor der Installation „Jetzt installieren? [J/n]“. Alles außer den Linux-Systembibliotheken wird ohne Administratorrechte in Ihrem Benutzerordner installiert; `sudo` wird nur nach ausdrücklicher Zustimmung genutzt. Zum Schluss steht der Befehl `bello` bereit (`~/.local/bin/bello`). Das Skript lässt sich gefahrlos erneut starten.
+
+Optionen: `./install.sh --check` (nur prüfen), `--yes` (alle Fragen mit Ja, außer `sudo`), `--yes-sudo` (zusammen mit `--yes`: auch `sudo`-Schritte ohne Nachfrage), `--help`.
+
+### Manuelle Installation
 
 ```bash
 git clone https://github.com/k1tesurfen/bello && cd bello
@@ -104,8 +114,9 @@ bello doctor                           # Umgebung prüfen, Probleme mit Lösungs
 | ------------------------------ | -------------------------------------------------------------------- |
 | `--crawl`                      | Vollständiger Crawl (Sitemap, Fallback: Link-Crawl)                  |
 | `--pages <n>`                  | Maximale Seitenzahl pro Site                                         |
-| `--config <file>`              | Pfad zur Konfigurationsdatei (Standard: `bello.config.yaml`)         |
-| `--out <dir>`                  | Ausgabeverzeichnis (Standard: `./bello-reports`)                     |
+| `--config <file>`              | Pfad zur Konfigurationsdatei (siehe „Wo landen die Reports?")        |
+| `--out <dir>`                  | Report-Verzeichnis (relativ zum aktuellen Verzeichnis)               |
+| `--here`                       | Reports in `./bello-reports` des aktuellen Verzeichnisses ablegen    |
 | `--proxy <url>`                | Proxy (z. B. für eine deutsche Exit-IP)                              |
 | `--identify`                   | Hängt `Bello/x.y` an den User-Agent                                  |
 | `--reject-selector <css>`      | CSS-Selektor des „Ablehnen"-Buttons, falls nicht automatisch erkannt |
@@ -127,7 +138,7 @@ Prüft und meldet jeweils ✓ / ✗ / ! mit deutschem Lösungshinweis:
 - Fehlende Systembibliotheken (Linux)
 - **Test-Start** von Chromium headless mit NetLog gegen eine lokale Testseite (beweist, dass das Capture funktioniert)
 - Datendateien vorhanden und Alter (Warnung ab 30 Tagen)
-- Ausgabeverzeichnis beschreibbar
+- Report-Verzeichnis beschreibbar (das Verzeichnis, das ein Scan tatsächlich nutzen würde, samt Herkunft; `doctor` akzeptiert ebenfalls `--out`, `--here`, `--config`)
 - Exit-IP in der EU/im EWR (`--offline` überspringt die Prüfung)
 
 Schlägt der Browser-Start bei einem Scan fehl, übersetzt Bello die Playwright-Meldung (fehlende Bibliothek, Chromium nicht installiert, Sandbox-Probleme im Container, fehlende Datendateien) in eine verständliche Meldung mit Hinweis auf `bello doctor` bzw. `bello setup`.
@@ -168,9 +179,29 @@ customers:
 
 Die Konfiguration wird mit `zod` validiert; Fehler werden auf Deutsch gemeldet. Das Firmen-Branding (Logo, Farben, Kontakt) erscheint im Deckblatt der Reports.
 
+## Wo landen die Reports?
+
+Das Report-Verzeichnis wird in dieser Reihenfolge bestimmt:
+
+1. `--out <dir>`: ausdrücklich angegebener Ordner (relativ zum aktuellen Verzeichnis)
+2. `--here`: `./bello-reports` im aktuellen Verzeichnis
+3. `defaults.outDir` aus der Konfiguration: das **globale Report-Verzeichnis**, z. B. `~/bello-reports`. Ein führendes `~` wird aufgelöst; ein relativer Pfad gilt relativ zum Ordner der Konfigurationsdatei, nicht zum Arbeitsverzeichnis. So landen alle Reports immer am selben Ort, egal wo `bello` gestartet wird.
+4. sonst `./bello-reports` im aktuellen Verzeichnis
+
+`--out` und `--here` zusammen sind ein Fehler (Exit-Code 3).
+
+Die Konfigurationsdatei wird in dieser Reihenfolge gesucht: `--config <datei>`, dann `./bello.config.yaml`, dann die globale Datei `$XDG_CONFIG_HOME/bello/bello.config.yaml` (Standard: `~/.config/bello/bello.config.yaml`, auch unter macOS), sonst gelten die eingebauten Standardwerte. Minimale globale Konfiguration:
+
+```yaml
+defaults:
+  outDir: ~/bello-reports
+```
+
+`./install.sh` bietet an, diese Datei anzulegen. `bello doctor` zeigt, welches Verzeichnis ein Scan nutzen würde und warum.
+
 ## Ausgaben (Reports)
 
-Pro Scan entsteht `./bello-reports/<domain>/<YYYY-MM-DDTHH-mm-ssZ>/`:
+Pro Scan entsteht `<Report-Verzeichnis>/<domain>/<YYYY-MM-DDTHH-mm-ssZ>/`:
 
 ```
 report.json            # vollständige, maschinenlesbare Ergebnisse (versioniertes Schema)

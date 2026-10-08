@@ -178,6 +178,7 @@ describe('resolveScanOptions', () => {
       delayMs: 2000,
       waitSeconds: 10,
       outDir: path.resolve('/cwd', './bello-reports'),
+      outDirSource: 'cwd',
       pdf: true,
       headful: false,
       identify: false,
@@ -196,7 +197,8 @@ describe('resolveScanOptions', () => {
       waitSeconds: 7,
       rejectSelector: '#cfg',
       firstPartyAliases: ['x.de'],
-      outDir: path.resolve('/cwd', './out'),
+      outDir: path.resolve('/base', './out'),
+      outDirSource: 'config',
     });
   });
 

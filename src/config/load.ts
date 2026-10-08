@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, statSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { parse as parseYaml, YAMLParseError } from 'yaml';
 import { ConfigError } from './errors.js';
@@ -35,7 +36,8 @@ export interface BelloConfig {
     contact?: string;
   };
   defaults: {
-    outDir: string;
+    /** Global reports directory (absolute; `~` expanded, relative paths resolved against the config file's directory). Unset = <cwd>/bello-reports. */
+    outDir?: string;
     waitSeconds: number;
     crawl: { maxPages: number; delayMs: number; sitesInParallel: number };
     pages?: number;
@@ -57,7 +59,6 @@ export function builtinConfig(): BelloConfig {
   return {
     company: { name: 'Bello', colors: { primary: DEFAULT_PRIMARY_COLOR } },
     defaults: {
-      outDir: './bello-reports',
       waitSeconds: 10,
       crawl: { maxPages: 200, delayMs: 2000, sitesInParallel: 3 },
     },
@@ -67,8 +68,32 @@ export function builtinConfig(): BelloConfig {
 
 const CONFIG_FILENAME = 'bello.config.yaml';
 
+/** Expand a leading `~`, then resolve relative paths against the config file's directory. */
+export function resolveConfigDir(value: string, baseDir: string, home: string): string {
+  let v = value.trim();
+  if (v === '~') v = home;
+  else if (v.startsWith('~/') || v.startsWith('~\\')) v = path.join(home, v.slice(2));
+  return path.resolve(baseDir, v);
+}
+
+/** Home directory used for `~` and the global config (HOME wins so tests can override it). */
+export function homeDirOf(env: NodeJS.ProcessEnv = process.env): string {
+  return env.HOME && path.isAbsolute(env.HOME) ? env.HOME : os.homedir();
+}
+
+/** `$XDG_CONFIG_HOME/bello/bello.config.yaml` (default `~/.config/...`, also on macOS). */
+export function globalConfigPath(env: NodeJS.ProcessEnv = process.env): string {
+  const xdg = env.XDG_CONFIG_HOME;
+  const base = xdg && path.isAbsolute(xdg) ? xdg : path.join(homeDirOf(env), '.config');
+  return path.join(base, 'bello', CONFIG_FILENAME);
+}
+
 /** Validate an already-parsed YAML value; paths are resolved relative to baseDir. */
-export function buildConfig(raw: unknown, baseDir: string): BelloConfig {
+export function buildConfig(
+  raw: unknown,
+  baseDir: string,
+  home: string = os.homedir(),
+): BelloConfig {
   const parsed = configSchema.safeParse(raw ?? {}, { error: germanError });
   if (!parsed.success) {
     throw new ConfigError(
@@ -76,10 +101,10 @@ export function buildConfig(raw: unknown, baseDir: string): BelloConfig {
       parsed.error.issues.map((i) => `${formatPath(i.path)}: ${i.message}`),
     );
   }
-  return normalize(parsed.data, baseDir);
+  return normalize(parsed.data, baseDir, home);
 }
 
-function normalize(raw: RawConfig, baseDir: string): BelloConfig {
+function normalize(raw: RawConfig, baseDir: string, home: string): BelloConfig {
   const base = builtinConfig();
   const rel = (p: string) => path.resolve(baseDir, p);
   const colors: BelloConfig['company']['colors'] = {
@@ -111,7 +136,7 @@ function normalize(raw: RawConfig, baseDir: string): BelloConfig {
       ...(raw.company?.contact !== undefined && { contact: raw.company.contact }),
     },
     defaults: {
-      outDir: d?.outDir ?? base.defaults.outDir,
+      ...(d?.outDir !== undefined && { outDir: resolveConfigDir(d.outDir, baseDir, home) }),
       waitSeconds: d?.waitSeconds ?? base.defaults.waitSeconds,
       crawl: {
         maxPages: d?.crawl?.maxPages ?? base.defaults.crawl.maxPages,
@@ -125,10 +150,14 @@ function normalize(raw: RawConfig, baseDir: string): BelloConfig {
 }
 
 /**
- * Load the configuration. With an explicit path the file must exist; without,
- * ./bello.config.yaml is used if present, otherwise built-in defaults.
+ * Load the configuration. Lookup order: explicit path (must exist) >
+ * ./bello.config.yaml > global config (see globalConfigPath) > built-in defaults.
  */
-export function loadConfig(configPath?: string, cwd: string = process.cwd()): LoadedConfig {
+export function loadConfig(
+  configPath?: string,
+  cwd: string = process.cwd(),
+  env: NodeJS.ProcessEnv = process.env,
+): LoadedConfig {
   let file: string;
   if (configPath !== undefined) {
     file = path.resolve(cwd, configPath);
@@ -137,7 +166,10 @@ export function loadConfig(configPath?: string, cwd: string = process.cwd()): Lo
     }
   } else {
     file = path.resolve(cwd, CONFIG_FILENAME);
-    if (!existsSync(file)) return { config: builtinConfig(), path: null, sha256: null };
+    if (!isFile(file)) {
+      file = globalConfigPath(env);
+      if (!isFile(file)) return { config: builtinConfig(), path: null, sha256: null };
+    }
   }
 
   let content: Buffer;
@@ -161,7 +193,7 @@ export function loadConfig(configPath?: string, cwd: string = process.cwd()): Lo
 
   let config: BelloConfig;
   try {
-    config = buildConfig(raw, path.dirname(file));
+    config = buildConfig(raw, path.dirname(file), homeDirOf(env));
   } catch (e) {
     if (e instanceof ConfigError && e.issues.length > 0) {
       throw new ConfigError(`Ungültige Konfiguration in ${file}:`, e.issues);
@@ -169,4 +201,12 @@ export function loadConfig(configPath?: string, cwd: string = process.cwd()): Lo
     throw e;
   }
   return { config, path: file, sha256: createHash('sha256').update(content).digest('hex') };
+}
+
+function isFile(p: string): boolean {
+  try {
+    return statSync(p).isFile();
+  } catch {
+    return false;
+  }
 }

@@ -5,7 +5,13 @@
 import pc from 'picocolors';
 import { Command, InvalidArgumentError, Option } from 'commander';
 import { diffReports } from '../analyze/diff.js';
-import { loadConfig, resolveScanOptions, type CliFlags } from '../config/index.js';
+import {
+  describeReportRoot,
+  loadConfig,
+  resolveReportRoot,
+  resolveScanOptions,
+  type CliFlags,
+} from '../config/index.js';
 import { updateDbIp, updateEasyPrivacy } from '../data/index.js';
 import { runDoctor } from '../platform/doctor.js';
 import { runSetup } from '../platform/setup.js';
@@ -26,6 +32,7 @@ export interface ScanCommandOptions {
   pages?: number;
   config?: string;
   out?: string;
+  here?: boolean;
   proxy?: string;
   identify?: boolean;
   rejectSelector?: string;
@@ -82,6 +89,7 @@ function buildFlags(o: ScanCommandOptions): CliFlags {
   if (o.crawl) flags.crawl = true;
   if (o.pages !== undefined) flags.pages = o.pages;
   if (o.out !== undefined) flags.out = o.out;
+  if (o.here) flags.here = true;
   if (o.proxy !== undefined) flags.proxy = o.proxy;
   if (o.identify) flags.identify = true;
   if (o.rejectSelector !== undefined) flags.rejectSelector = o.rejectSelector;
@@ -115,6 +123,10 @@ export async function runScanCommand(
     const loaded = loadConfig(o.config);
     const flags = buildFlags(o);
     if (o.all) {
+      const root = resolveReportRoot(loaded.config, flags);
+      if (root.source === 'config') {
+        io.err(pc.dim(`Reports: ${root.dir} (${describeReportRoot(root.source, loaded.path)})`));
+      }
       return await runBatchCommand(
         loaded.config,
         {
@@ -134,6 +146,13 @@ export async function runScanCommand(
       ...(url !== undefined ? { url } : {}),
       cliFlags: flags,
     });
+    if (scanOpts.outDirSource === 'config') {
+      io.err(
+        pc.dim(
+          `Reports: ${scanOpts.outDir} (${describeReportRoot(scanOpts.outDirSource, loaded.path)})`,
+        ),
+      );
+    }
     let pages: string[] | undefined;
     if (scanOpts.crawl) {
       io.err(pc.dim(`Ermittle Seiten von ${scanOpts.url} (max. ${scanOpts.maxPages}) …`));
@@ -296,7 +315,14 @@ export function buildProgram(
     .option('--crawl', 'vollständiger Crawl (Sitemap, Fallback Link-Crawl)')
     .option('--pages <n>', 'maximale Seitenzahl beim Crawl', intArg)
     .option('--config <datei>', 'Pfad zur bello.config.yaml')
-    .option('--out <verzeichnis>', 'Ausgabeverzeichnis (Standard ./bello-reports)')
+    .option(
+      '--out <verzeichnis>',
+      'Report-Verzeichnis (relativ zum aktuellen Verzeichnis); überschreibt --here und die Konfiguration',
+    )
+    .option(
+      '--here',
+      'Reports in ./bello-reports des aktuellen Verzeichnisses ablegen (statt im globalen Report-Verzeichnis)',
+    )
     .option('--proxy <url>', 'Proxy für alle Verbindungen, z. B. http://proxy:3128')
     .option('--identify', 'User-Agent um „Bello/x.y“ ergänzen')
     .option('--reject-selector <css>', 'CSS-Selektor des Ablehnen-Buttons')
@@ -346,11 +372,20 @@ export function buildProgram(
     .description('Umgebung prüfen und Probleme mit Lösungshinweis ausgeben')
     .option('--offline', 'Prüfungen mit Internetzugriff überspringen')
     .option('--config <datei>', 'Pfad zur bello.config.yaml')
-    .option('--out <verzeichnis>', 'Ausgabeverzeichnis prüfen (Standard: aus der Konfiguration)')
-    .action(async (o: { offline?: boolean; config?: string; out?: string }) => {
+    .option('--out <verzeichnis>', 'Report-Verzeichnis prüfen (wie bei scan)')
+    .option('--here', 'Verzeichnis ./bello-reports im aktuellen Verzeichnis prüfen')
+    .action(async (o: { offline?: boolean; config?: string; out?: string; here?: boolean }) => {
       try {
-        const outDir = o.out ?? loadConfig(o.config).config.defaults.outDir;
-        result.code = await runDoctor({ outDir, ...(o.offline ? { offline: true } : {}) });
+        const loaded = loadConfig(o.config);
+        const root = resolveReportRoot(loaded.config, {
+          ...(o.out !== undefined ? { out: o.out } : {}),
+          ...(o.here ? { here: true } : {}),
+        });
+        result.code = await runDoctor({
+          outDir: root.dir,
+          outDirReason: describeReportRoot(root.source, loaded.path),
+          ...(o.offline ? { offline: true } : {}),
+        });
       } catch (err) {
         io.err(pc.red(await describeError(err)));
         result.code = EXIT.fehler;

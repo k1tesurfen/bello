@@ -1,8 +1,8 @@
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { access, constants, mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { access, constants, mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import pc from 'picocolors';
 import { launchScenarioBrowser } from '../browser/launch.js';
 import { hostConnectionsFromFile } from '../capture/netlog/index.js';
@@ -17,11 +17,31 @@ import { printCheck, type CheckLine } from './output.js';
 export interface DoctorOptions {
   /** Skip checks needing the internet (exit IP). */
   offline?: boolean;
-  /** Output directory to test for writability (default `./bello-reports`). */
+  /** Report root to test for writability (default `<cwd>/bello-reports`). */
   outDir?: string;
+  /** German reason shown next to the directory, e.g. „aus Konfiguration …“. */
+  outDirReason?: string;
 }
 
 const STALE_DAYS = 30;
+
+/** Writable if it exists, or if its nearest existing ancestor is a writable directory (nothing is created). */
+async function checkWritableOrCreatable(dir: string): Promise<void> {
+  let cur = dir;
+  for (;;) {
+    try {
+      const st = await stat(cur);
+      if (!st.isDirectory()) throw new Error('not a directory');
+      await access(cur, constants.W_OK);
+      return;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+      const parent = dirname(cur);
+      if (parent === cur) throw e;
+      cur = parent;
+    }
+  }
+}
 
 /** Launch Chromium headless with NetLog against a tiny local server and verify capture works. */
 async function testStart(): Promise<CheckLine> {
@@ -252,16 +272,16 @@ export async function runDoctor(opts: DoctorOptions = {}): Promise<number> {
 
   // Output dir
   const outDir = resolve(opts.outDir ?? './bello-reports');
+  const outDetail = opts.outDirReason ? `${outDir} (${opts.outDirReason})` : outDir;
   try {
-    await mkdir(outDir, { recursive: true });
-    await access(outDir, constants.W_OK);
-    add({ status: 'ok', label: 'Ausgabeverzeichnis beschreibbar', detail: outDir });
+    await checkWritableOrCreatable(outDir);
+    add({ status: 'ok', label: 'Report-Verzeichnis beschreibbar', detail: outDetail });
   } catch {
     add({
       status: 'fail',
-      label: 'Ausgabeverzeichnis nicht beschreibbar',
-      detail: outDir,
-      hint: 'Rechte prüfen oder mit `bello doctor --out <Ordner>` bzw. `defaults.outDir` in der Konfiguration ein anderes Verzeichnis wählen.',
+      label: 'Report-Verzeichnis nicht beschreibbar',
+      detail: outDetail,
+      hint: 'Rechte prüfen oder mit `--out <Ordner>`, `--here` bzw. `defaults.outDir` in der Konfiguration ein anderes Verzeichnis wählen.',
     });
   }
 

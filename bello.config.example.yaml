@@ -1,7 +1,10 @@
 # Bello – Beispielkonfiguration. Kopieren nach bello.config.yaml und anpassen.
 # Für Ad-hoc-Scans (bello example.de) ist keine Konfiguration nötig.
 # Unbekannte Schlüssel werden als Fehler gemeldet. Relative Pfade (logo,
-# vendorsFile) beziehen sich auf den Ordner dieser Datei.
+# vendorsFile, outDir) beziehen sich auf den Ordner dieser Datei.
+#
+# Wo wird diese Datei gesucht? --config <datei>, dann ./bello.config.yaml,
+# dann global ~/.config/bello/bello.config.yaml (bzw. $XDG_CONFIG_HOME/bello/).
 
 company:
   name: 'Ihre Firma GmbH' # erscheint im Report-Kopf
@@ -10,7 +13,11 @@ company:
   contact: 'datenschutz@ihre-firma.de'
 
 defaults:
-  outDir: ./bello-reports # Ausgabeordner (relativ zum Arbeitsverzeichnis)
+  # Globales Report-Verzeichnis: alle Reports landen hier, egal wo bello gestartet wird.
+  # "~" wird aufgelöst, relative Pfade gelten relativ zu dieser Datei.
+  # Vorrang: --out <ordner> > --here (./bello-reports) > outDir > ./bello-reports.
+  # Ohne outDir wird ./bello-reports im aktuellen Verzeichnis verwendet.
+  outDir: ~/bello-reports
   waitSeconds: 10 # Wartezeit des „passiven Lesers"
   crawl:
     maxPages: 200 # max. Seiten pro Site

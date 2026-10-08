@@ -4,7 +4,7 @@ import path from 'node:path';
 import { DEFAULT_UA, discoverPages, type DiscoverResult } from '../crawl/discover.js';
 import { BELLO_VERSION } from '../version.js';
 import { diffReports } from '../analyze/diff.js';
-import { resolveScanOptions, ConfigError } from '../config/index.js';
+import { resolveReportRoot, resolveScanOptions, ConfigError } from '../config/index.js';
 import type { BelloConfig, CliFlags } from '../config/index.js';
 import { readJsonReport } from '../report/json.js';
 import { domainOf, scanSite } from '../scan/index.js';
@@ -240,7 +240,7 @@ export async function runBatch(config: BelloConfig, opts: RunBatchOptions): Prom
     }
   });
 
-  if (!outDir) outDir = path.resolve(config.defaults.outDir);
+  if (!outDir) outDir = resolveReportRoot(config, opts.cliFlags).dir;
   return {
     startedAt,
     finishedAt: new Date().toISOString(),
